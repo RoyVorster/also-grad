@@ -81,12 +81,6 @@ class Parameter:
 
 # Any operation on parameters
 class Operation:
-    def set_cache(self, *xs: np.ndarray):
-        self.cache += xs
-
-    def reset(self):
-        self.parents, self.cache = [], []
-
     def forward(self, *xs: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
@@ -102,6 +96,12 @@ class Operation:
 
     def backward_(self, *xs: np.ndarray) -> [Parameter]:
         return plural(self.backward(*xs))
+
+    def set_cache(self, *xs: np.ndarray):
+        self.cache += xs
+
+    def reset(self):
+        self.parents, self.cache = [], []
 
     def __call__(self, *parameters) -> Parameter:
         self.reset()
