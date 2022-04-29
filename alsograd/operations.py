@@ -14,6 +14,16 @@ class Add(Operation):
         return rev_sum(g, a_shape), rev_sum(g, b_shape)
 
 
+class Sub(Operation):
+    def forward(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        self.add_to_cache(a.shape, b.shape)
+        return a - b
+
+    def backward(self, g: np.ndarray) -> [Parameter, Parameter]:
+        a_shape, b_shape = self.cache
+        return rev_sum(g, a_shape), rev_sum(-g, b_shape)
+
+
 class Mul(Operation):
     def forward(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
         self.add_to_cache(a, b)
@@ -23,8 +33,10 @@ class Mul(Operation):
         a, b = self.cache
         return rev_sum(g*a, a.shape), rev_sum(g*b, b.shape)
 
+
+# Reduce operations
 class Sum(Operation):
-    def __init__(self, axis):
+    def __init__(self, axis: Optiona[int]=None):
         self.axis = axis
 
     def forward(self, a: np.ndarray) -> np.ndarray:
@@ -34,4 +46,3 @@ class Sum(Operation):
     def backward(self, g: np.ndarray) -> Parameter:
         a_shape, = self.cache
         return np.broadcast_to(g, a_shape)
-

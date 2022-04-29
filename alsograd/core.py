@@ -86,8 +86,8 @@ class Parameter:
     def __mul__(self, other) -> Parameter:
         return Mul()(self, other)
 
-    def sum(self, axis=None) -> Parameter:
-        return Sum()
+    def sum(self, **kwargs) -> Parameter:
+        return Sum(**kwargs)(self)
 
 
 # Any operation on parameters
