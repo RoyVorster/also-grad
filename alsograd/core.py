@@ -1,12 +1,13 @@
-from contextlib import contextmanager
-from typing import Iterator
+from __future__ import annotations
 
+from contextlib import contextmanager
+from typing import Iterator, Union
 import numpy as np
 
 
 # Quick utils
 def plural(x):
-    return x if isinstance(x, tuple) else return (x, )
+    return x if isinstance(x, tuple) else (x, )
 
 
 # Top-level grad enabled flag
@@ -81,32 +82,32 @@ class Parameter:
 
 # Any operation on parameters
 class Operation:
-    def forward(self, *xs: np.ndarray) -> np.ndarray:
-        raise NotImplementedError
-
-    def backward(self, *xs: np.ndarray):
-        raise NotImplementedError
-
-    # Internal wrappers
-    def forward_(self, *parameters: Parameter) -> np.ndarray:
-        self.parents = parameters
-
-        requires_grad = any(p.requires_grad for p in parameters)
-        return Parameter(self.forward(*[p.data for p in parameters]), requires_grad=requires_grad)
-
-    def backward_(self, *xs: np.ndarray) -> [Parameter]:
-        return plural(self.backward(*xs))
-
-    def set_cache(self, *xs: np.ndarray):
-        self.cache += xs
-
     def reset(self):
         self.parents, self.cache = [], []
 
-    def __call__(self, *parameters) -> Parameter:
+    def add_to_cache(self, *xs: np.ndarray):
+        self.cache += xs
+
+    def forward(self, *xs: np.ndarray, **kwargs) -> np.ndarray:
+        raise NotImplementedError
+
+    def backward(self, g: np.ndarray) -> Union[Parameter, [Parameter]]:
+        raise NotImplementedError
+
+    # Internal wrappers
+    def forward_(self, *parameters: Parameter, **kwargs) -> np.ndarray:
+        self.parents = parameters
+
+        requires_grad = any(p.requires_grad for p in parameters)
+        return Parameter(self.forward(*[p.data for p in parameters], **kwargs), requires_grad=requires_grad)
+
+    def backward_(self, g: np.ndarray) -> [Parameter]:
+        return plural(self.backward(g))
+
+    def __call__(self, *parameters, **kwargs) -> Parameter:
         self.reset()
 
-        output = self.forward_(*parameters)
+        output = self.forward_(*parameters, **kwargs)
         if enable_grad and output.requires_grad:
             output.creator = self
 
