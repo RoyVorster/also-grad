@@ -4,10 +4,7 @@ from contextlib import contextmanager
 from typing import Iterator, Union
 import numpy as np
 
-
-# Quick utils
-def plural(x):
-    return x if isinstance(x, tuple) else (x, )
+from alsograd.utils import plural
 
 
 # Top-level grad enabled flag
@@ -29,6 +26,9 @@ class Parameter:
         self.grad, self.requires_grad = None, requires_grad
 
         self.creator = None # An operation
+
+    def __str__(self):
+        return str(self.data) + (' WITH grad' if self.requires_grad else ' NO grad')
 
     def detach(self):
         if not self.requires_grad:
@@ -55,7 +55,7 @@ class Parameter:
         data = np.random.uniform(-1, 1, shape)/np.sqrt(np.prod(shape))
         return cls(data.astype(np.float32), **kwargs)
 
-    def backward(self):
+    def backward(self) -> None:
         # DFS
         nodes, seen = [], set()
         def dfs_(node):
@@ -64,24 +64,27 @@ class Parameter:
                 for new_node in node.creator.parents:
                     dfs_(new_node)
 
-                nodes.append(new_node)
+                nodes.append(node)
 
         dfs_(self)
 
         # Go backward through the graph
-        self.grad = Parameter.ones(self.shape, requires_grad=False)
+        self.grad = Parameter(np.ones_like(self.data), requires_grad=False)
         for node in reversed(nodes):
-            if not any(p.requires_grad for parameters in node.creator.parents):
+            if not any(p.requires_grad for p in node.creator.parents):
                 continue
 
-            grads = node.creator.backward_(n.grad.data)
+            grads = node.creator.backward_(node.grad.data)
             for (parent, grad) in zip(node.creator.parents, grads):
                 if grad and parent.requires_grad:
                     parent.grad = parent.grad + grad if parent.grad else grad
 
-    # Override with Operations
+    # Operations
     def __add__(self, other) -> Parameter:
         return Add()(self, other)
+
+    def __sub__(self, other) -> Parameter:
+        return Sub()(self, other)
 
     def __mul__(self, other) -> Parameter:
         return Mul()(self, other)
@@ -101,7 +104,7 @@ class Operation:
     def forward(self, *xs: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
-    def backward(self, g: np.ndarray) -> Union[Parameter, [Parameter]]:
+    def backward(self, g: np.ndarray) -> Union[np.ndarray, Tuple[np.ndarray, ...]]:
         raise NotImplementedError
 
     # Internal wrappers
@@ -112,7 +115,7 @@ class Operation:
         return Parameter(self.forward(*[p.data for p in parameters]), requires_grad=requires_grad)
 
     def backward_(self, g: np.ndarray) -> [Parameter]:
-        return plural(self.backward(g))
+        return [Parameter(x, requires_grad=True) for x in plural(self.backward(g))]
 
     def __call__(self, *parameters) -> Parameter:
         self.reset()
@@ -122,4 +125,7 @@ class Operation:
             output.creator = self
 
         return output
+
+# Circular imports
+from alsograd.operations import *
 
