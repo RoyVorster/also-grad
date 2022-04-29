@@ -28,7 +28,16 @@ class Parameter:
         self.creator = None # An operation
 
     def __str__(self):
-        return str(self.data) + (' WITH grad' if self.requires_grad else ' NO grad')
+        s = str(self.data)
+        if self.requires_grad:
+            if self.grad:
+                s += ', with gradient: ' + str(self.grad)
+            else:
+                s += ', with empty gradient'
+        else:
+            s += ', with no gradient required'
+
+        return s + '.'
 
     def detach(self):
         if not self.requires_grad:
@@ -36,6 +45,9 @@ class Parameter:
             return self
 
         return Parameter(self.data, requires_grad=False)
+
+    def zero_grad(self):
+        self.grad = None
 
     @property
     def shape(self):
@@ -125,6 +137,7 @@ class Operation:
             output.creator = self
 
         return output
+
 
 # Circular imports
 from alsograd.operations import *
