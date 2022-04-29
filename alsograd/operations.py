@@ -24,9 +24,12 @@ class Mul(Operation):
         return rev_sum(g*a, a.shape), rev_sum(g*b, b.shape)
 
 class Sum(Operation):
-    def forward(self, a: np.ndarray, axis=None) -> np.ndarray:
+    def __init__(self, axis):
+        self.axis = axis
+
+    def forward(self, a: np.ndarray) -> np.ndarray:
         self.add_to_cache(a.shape)
-        return a.sum(axis=axis, keepdims=True)
+        return a.sum(axis=self.axis, keepdims=True)
 
     def backward(self, g: np.ndarray) -> Parameter:
         a_shape, = self.cache

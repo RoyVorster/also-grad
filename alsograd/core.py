@@ -79,6 +79,16 @@ class Parameter:
                 if grad and parent.requires_grad:
                     parent.grad = parent.grad + grad if parent.grad else grad
 
+    # Override with Operations
+    def __add__(self, other) -> Parameter:
+        return Add()(self, other)
+
+    def __mul__(self, other) -> Parameter:
+        return Mul()(self, other)
+
+    def sum(self, axis=None) -> Parameter:
+        return Sum()
+
 
 # Any operation on parameters
 class Operation:
@@ -88,26 +98,26 @@ class Operation:
     def add_to_cache(self, *xs: np.ndarray):
         self.cache += xs
 
-    def forward(self, *xs: np.ndarray, **kwargs) -> np.ndarray:
+    def forward(self, *xs: np.ndarray) -> np.ndarray:
         raise NotImplementedError
 
     def backward(self, g: np.ndarray) -> Union[Parameter, [Parameter]]:
         raise NotImplementedError
 
     # Internal wrappers
-    def forward_(self, *parameters: Parameter, **kwargs) -> np.ndarray:
+    def forward_(self, *parameters: Parameter) -> np.ndarray:
         self.parents = parameters
 
         requires_grad = any(p.requires_grad for p in parameters)
-        return Parameter(self.forward(*[p.data for p in parameters], **kwargs), requires_grad=requires_grad)
+        return Parameter(self.forward(*[p.data for p in parameters]), requires_grad=requires_grad)
 
     def backward_(self, g: np.ndarray) -> [Parameter]:
         return plural(self.backward(g))
 
-    def __call__(self, *parameters, **kwargs) -> Parameter:
+    def __call__(self, *parameters) -> Parameter:
         self.reset()
 
-        output = self.forward_(*parameters, **kwargs)
+        output = self.forward_(*parameters)
         if enable_grad and output.requires_grad:
             output.creator = self
 
