@@ -26,11 +26,10 @@ class Module:
 
         return p
 
-    forward: Callable[..., np.ndarray]
+    forward: Callable[..., Parameter]
 
-    def __call__(self, *parameters: Parameter) -> Parameter:
-        requires_grad = any(p.requires_grad for p in parameters)
-        return Parameter(self.forward(*[p.data for p in parameters], requires_grad))
+    def __call__(self, *args):
+        return self.forward(args)
 
 
 class Linear(Module):
@@ -39,5 +38,5 @@ class Linear(Module):
         self.w = Parameter.init(in_neurons, out_neurons)
         self.b = Parameter.init(out_neurons)
 
-    def forward(self, x: np.ndarray) -> np.ndarray:
+    def forward(self, x: Parameter) -> Parameter:
         return x@self.w + self.b
