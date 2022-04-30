@@ -51,7 +51,7 @@ class Parameter:
         return Parameter(self.data, requires_grad=False)
 
     def zero_grad(self) -> None:
-        self.grad = None
+        self.grad, self.creator = None, None
 
     @property
     def shape(self) -> Tuple[int, ...]:
@@ -76,6 +76,9 @@ class Parameter:
         return cls(data.astype(np.float32), **kwargs)
 
     def backward(self) -> None:
+        if not self.requires_grad or not enable_grad:
+            return
+
         # DFS
         nodes: List[Parameter] = []
         seen: Set[Parameter] = set()

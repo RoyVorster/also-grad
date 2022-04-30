@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Dict, List, Any, Callable
 
 from alsograd.core import Parameter
@@ -25,7 +27,11 @@ class Module:
 
         return p
 
-    forward: Callable[..., Parameter]
+    def zero_grad(self) -> None:
+        for p in self.parameters:
+            p.zero_grad()
+
+    forward: Callable[[Module, Parameter], Parameter]
 
     def __call__(self, *args) -> Parameter:
         return self.forward(*args)

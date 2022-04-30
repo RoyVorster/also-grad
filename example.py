@@ -25,8 +25,13 @@ class Net(Module):
 
 # Simple forward pass
 model = Net()
-x = ag.Parameter.init(1, 10)
+x = ag.Parameter.rand(1, 10)
 y = model(x)
+
+with ag.no_grad():
+    print(x.grad)
+    x -= ag.Parameter(10)
 
 y.backward()
 print(model.l1.w.grad)
+
