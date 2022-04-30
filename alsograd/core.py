@@ -66,6 +66,10 @@ class Parameter:
         return cls(np.ones(shape, dtype=np.float32), **kwargs)
 
     @classmethod
+    def rand(cls, *shape: int, **kwargs) -> Parameter:
+        return cls(np.random.rand(*shape).astype(np.float32), **kwargs)
+
+    @classmethod
     def init(cls, *shape: int, **kwargs) -> Parameter:
         # Standard uniform initialization
         data = np.random.uniform(-1, 1, shape)/np.sqrt(np.prod(shape))
