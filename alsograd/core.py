@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Iterator, Union, List, Tuple, Set, Any, Optional, Callable
+from copy import copy
+from typing import Iterator, Union, List, Tuple, Set, Any, Optional, Callable, Iterable
 import numpy as np
 
 from alsograd.utils import plural
@@ -23,12 +24,11 @@ def no_grad() -> Iterator[None]:
 
 # Parameters with gradients
 class Parameter:
-    def __init__(self, data: np.ndarray, requires_grad=True):
-        self.data = np.asarray(data) if not isinstance(data, Parameter) else data.data
+    def __init__(self, data: Union[Parameter, np.ndarray, Iterable[Any]], requires_grad=True):
+        self.data: np.ndarray = data.data if isinstance(data, Parameter) else np.asarray(data)
+        self.requires_grad: bool = data.requires_grad if isinstance(data, Parameter) else requires_grad
 
         self.grad: Optional[Parameter] = None
-        self.requires_grad = requires_grad
-
         self.creator: Optional[Operation] = None
 
     def __str__(self) -> str:
@@ -125,8 +125,7 @@ class Parameter:
 
 # Any operation on parameters
 class Operation:
-    forward: Callable[..., np.ndarray]  # Doesn't specify input type
-
+    forward: Callable[..., np.ndarray]
     backward: Callable[..., Union[np.ndarray, Tuple[np.ndarray, ...]]]
 
     def reset(self):
@@ -150,7 +149,7 @@ class Operation:
 
         output = self.forward_(*parameters)
         if enable_grad and output.requires_grad:
-            output.creator = self
+            output.creator = copy(self)
 
         return output
 

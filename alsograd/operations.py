@@ -82,4 +82,4 @@ class Dot(Operation):
 
     def backward(self, g: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         a, w = self.cache
-        return a@w.T, w@a.T
+        return g@w.T, a.T@g

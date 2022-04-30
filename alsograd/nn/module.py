@@ -14,8 +14,8 @@ class Module:
             self._parameters[name] = value
         elif isinstance(value, Module):
             self._modules[name] = value
-        else:
-            object.__setattr__(self, name, value)
+
+        object.__setattr__(self, name, value)
 
     @property
     def parameters(self) -> List[Parameter]:
@@ -27,5 +27,5 @@ class Module:
 
     forward: Callable[..., Parameter]
 
-    def __call__(self, *args):
-        return self.forward(args)
+    def __call__(self, *args) -> Parameter:
+        return self.forward(*args)
