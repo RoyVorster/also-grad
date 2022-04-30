@@ -20,6 +20,16 @@ class Pow(Operation):
         return g*a*self.exp**(self.exp - 1)
 
 
+class Exp(Operation):
+    def forward(self, a: np.ndarray) -> np.ndarray:
+        self.add_to_cache(a)
+        return np.exp(a)
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        a, = self.cache
+        return g*np.exp(a)
+
+
 class Add(Operation):
     def forward(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
         self.add_to_cache(a.shape, b.shape)
@@ -83,3 +93,16 @@ class Dot(Operation):
     def backward(self, g: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         a, w = self.cache
         return g@w.T, a.T@g
+
+
+class Reshape(Operation):
+    def __init__(self, *shape: int) -> None:
+        self.shape = shape
+
+    def forward(self, a: np.ndarray) -> np.ndarray:
+        self.add_to_cache(a.shape)
+        return a.reshape(self.shape)
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        a_shape, = self.cache
+        return g.reshape(a_shape)

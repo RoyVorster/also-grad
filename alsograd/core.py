@@ -129,6 +129,12 @@ class Parameter:
     def sum(self, **kwargs) -> Parameter:
         return ops.Sum(**kwargs)(self)
 
+    def exp(self) -> Parameter:
+        return ops.Exp()(self)
+
+    def reshape(self, *shape: int) -> Parameter:
+        return ops.Reshape(*shape)(self)
+
 
 # Any operation on parameters
 class Operation:
