@@ -13,6 +13,9 @@ class Optimizer:
 
     parameter_step: Callable[[Parameter], None]
 
+    def zero_grad(self) -> None:
+        self.model.zero_grad()
+
     def step(self):
         with no_grad():
             for p in self.parameters:
