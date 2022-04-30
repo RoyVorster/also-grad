@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Iterator, Union
+from typing import Iterator, Union, List, Tuple, Set, Any, Optional, Callable
 import numpy as np
 
 from alsograd.utils import plural
@@ -10,8 +10,10 @@ from alsograd.utils import plural
 # Top-level grad enabled flag
 enable_grad = True
 
+
 @contextmanager
 def no_grad() -> Iterator[None]:
+    global enable_grad
     enable_grad = False
     try:
         yield
@@ -21,13 +23,15 @@ def no_grad() -> Iterator[None]:
 
 # Parameters with gradients
 class Parameter:
-    def __init__(self, data, requires_grad=True):
-        self.data: np.npdarray = np.asarray(data) if not isinstance(data, Parameter) else data.data
-        self.grad, self.requires_grad = None, requires_grad
+    def __init__(self, data: np.ndarray, requires_grad=True):
+        self.data = np.asarray(data) if not isinstance(data, Parameter) else data.data
 
-        self.creator = None # An operation
+        self.grad: Optional[Parameter] = None
+        self.requires_grad = requires_grad
 
-    def __str__(self):
+        self.creator: Optional[Operation] = None
+
+    def __str__(self) -> str:
         s = str(self.data)
         if self.requires_grad:
             if self.grad:
@@ -39,18 +43,18 @@ class Parameter:
 
         return s + '.'
 
-    def detach(self):
+    def detach(self) -> Parameter:
         if not self.requires_grad:
             self.creator = None
             return self
 
         return Parameter(self.data, requires_grad=False)
 
-    def zero_grad(self):
+    def zero_grad(self) -> None:
         self.grad = None
 
     @property
-    def shape(self):
+    def shape(self) -> Tuple[int, ...]:
         return self.data.shape
 
     @classmethod
@@ -69,8 +73,10 @@ class Parameter:
 
     def backward(self) -> None:
         # DFS
-        nodes, seen = [], set()
-        def dfs_(node):
+        nodes: List[Parameter] = []
+        seen: Set[Parameter] = set()
+
+        def dfs_(node: Parameter):
             # If can go forward, keep going
             if node not in seen and node.creator:
                 for new_node in node.creator.parents:
@@ -83,6 +89,9 @@ class Parameter:
         # Go backward through the graph
         self.grad = Parameter(np.ones_like(self.data), requires_grad=False)
         for node in reversed(nodes):
+            if not (node and node.creator and node.grad):
+                continue
+
             if not any(p.requires_grad for p in node.creator.parents):
                 continue
 
@@ -93,40 +102,47 @@ class Parameter:
 
     # Operations
     def __add__(self, other) -> Parameter:
-        return Add()(self, other)
+        return ops.Add()(self, other)
 
     def __sub__(self, other) -> Parameter:
-        return Sub()(self, other)
+        return ops.Sub()(self, other)
 
     def __mul__(self, other) -> Parameter:
-        return Mul()(self, other)
+        return ops.Mul()(self, other)
+
+    def __div__(self, other) -> Parameter:
+        return ops.Div()(self, other)
+
+    def __pow__(self, exp: float) -> Parameter:
+        return ops.Pow(exp=exp)(self)
+
+    def __matmul__(self, other) -> Parameter:
+        return ops.Dot()(self, other)
 
     def sum(self, **kwargs) -> Parameter:
-        return Sum(**kwargs)(self)
+        return ops.Sum(**kwargs)(self)
 
 
 # Any operation on parameters
 class Operation:
+    forward: Callable[..., np.ndarray]  # Doesn't specify input type
+
+    backward: Callable[..., Union[np.ndarray, Tuple[np.ndarray, ...]]]
+
     def reset(self):
         self.parents, self.cache = [], []
 
-    def add_to_cache(self, *xs: np.ndarray):
+    def add_to_cache(self, *xs: Any) -> None:
         self.cache += xs
 
-    def forward(self, *xs: np.ndarray) -> np.ndarray:
-        raise NotImplementedError
-
-    def backward(self, g: np.ndarray) -> Union[np.ndarray, Tuple[np.ndarray, ...]]:
-        raise NotImplementedError
-
     # Internal wrappers
-    def forward_(self, *parameters: Parameter) -> np.ndarray:
+    def forward_(self, *parameters: Parameter) -> Parameter:
         self.parents = parameters
 
         requires_grad = any(p.requires_grad for p in parameters)
         return Parameter(self.forward(*[p.data for p in parameters]), requires_grad=requires_grad)
 
-    def backward_(self, g: np.ndarray) -> [Parameter]:
+    def backward_(self, g: np.ndarray) -> List[Parameter]:
         return [Parameter(x, requires_grad=True) for x in plural(self.backward(g))]
 
     def __call__(self, *parameters) -> Parameter:
@@ -140,5 +156,4 @@ class Operation:
 
 
 # Circular imports
-from alsograd.operations import *
-
+import alsograd.operations as ops

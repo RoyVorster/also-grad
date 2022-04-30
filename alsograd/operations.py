@@ -1,10 +1,23 @@
 from __future__ import annotations
 
-from typing import Optional, Union, Tuple, TYPE_CHECKING
+from typing import Optional, Tuple
 import numpy as np
 
 from alsograd.utils import rev_sum
 from alsograd.core import Operation
+
+
+class Pow(Operation):
+    def __init__(self, exp: float) -> None:
+        self.exp = exp
+
+    def forward(self, a: np.ndarray) -> np.ndarray:
+        self.add_to_cache(a)
+        return a**self.exp
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        a, = self.cache
+        return g*a*self.exp**(self.exp - 1)
 
 
 class Add(Operation):
@@ -37,9 +50,19 @@ class Mul(Operation):
         return rev_sum(g*a, a.shape), rev_sum(g*b, b.shape)
 
 
+class Div(Operation):
+    def forward(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        self.add_to_cache(a, b)
+        return a/b
+
+    def backward(self, g: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        a, b = self.cache
+        return rev_sum(g/b, a.shape), rev_sum(-g*a/(b**2), b.shape)
+
+
 # Reduce operations
 class Sum(Operation):
-    def __init__(self, axis: Optional[int]=None):
+    def __init__(self, axis: Optional[int] = None):
         self.axis = axis
 
     def forward(self, a: np.ndarray) -> np.ndarray:
@@ -50,3 +73,13 @@ class Sum(Operation):
         a_shape, = self.cache
         return np.broadcast_to(g, a_shape)
 
+
+# LA operations
+class Dot(Operation):
+    def forward(self, a: np.ndarray, w: np.ndarray) -> np.ndarray:
+        self.add_to_cache(a, w)
+        return a@w
+
+    def backward(self, g: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        a, w = self.cache
+        return a@w.T, w@a.T
