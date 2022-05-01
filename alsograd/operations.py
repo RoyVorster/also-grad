@@ -84,6 +84,21 @@ class Sum(Operation):
         return np.broadcast_to(g, a_shape)
 
 
+class Max(Operation):
+    def __init__(self, axis: Optional[int] = None):
+        self.axis = axis
+
+    def forward(self, a: np.ndarray) -> np.ndarray:
+        out = np.amax(a, axis=self.axis)
+        self.add_to_cache(a, out)
+        return out
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        a, out = self.cache
+        flow = (a == out)
+        return flow*g/flow.sum()
+
+
 # LA operations
 class Dot(Operation):
     def forward(self, a: np.ndarray, w: np.ndarray) -> np.ndarray:

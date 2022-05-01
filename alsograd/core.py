@@ -129,6 +129,9 @@ class Parameter:
     def sum(self, **kwargs) -> Parameter:
         return ops.Sum(**kwargs)(self)
 
+    def max(self, **kwargs) -> Parameter:
+        return ops.Max(**kwargs)(self)
+
     def exp(self) -> Parameter:
         return ops.Exp()(self)
 
