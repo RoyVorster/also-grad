@@ -139,6 +139,10 @@ class Parameter:
     def sum(self, **kwargs) -> Parameter:
         return ops.Sum(**kwargs)(self)
 
+    def mean(self, **kwargs) -> Parameter:
+        s = self.sum(**kwargs)
+        return s*(np.prod(self.shape)/np.prod(s.shape))
+
     def max(self, **kwargs) -> Parameter:
         return ops.Max(**kwargs)(self)
 
@@ -150,6 +154,9 @@ class Parameter:
 
     def reshape(self, *shape: int) -> Parameter:
         return ops.Reshape(*shape)(self)
+
+    def ravel(self) -> Parameter:
+        return self.reshape(-1)
 
     def transpose(self, **kwargs) -> Parameter:
         return ops.Transpose(**kwargs)(self)
