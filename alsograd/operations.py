@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union, Sequence
 import numpy as np
 
 from alsograd.utils import rev_sum
 from alsograd.core import Operation
+
+
+Axis = Union[None, Sequence[int]]
 
 
 class Pow(Operation):
@@ -28,6 +31,16 @@ class Exp(Operation):
     def backward(self, g: np.ndarray) -> np.ndarray:
         a, = self.cache
         return g*np.exp(a)
+
+
+class Log(Operation):
+    def forward(self, a: np.ndarray) -> np.ndarray:
+        self.add_to_cache(a)
+        return np.log(a)
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        a, = self.cache
+        return g/a
 
 
 class Add(Operation):
@@ -72,7 +85,7 @@ class Div(Operation):
 
 # Reduce operations
 class Sum(Operation):
-    def __init__(self, axis: Optional[int] = None):
+    def __init__(self, axis: Axis = None):
         self.axis = axis
 
     def forward(self, a: np.ndarray) -> np.ndarray:
@@ -121,3 +134,15 @@ class Reshape(Operation):
     def backward(self, g: np.ndarray) -> np.ndarray:
         a_shape, = self.cache
         return g.reshape(a_shape)
+
+
+class Transpose(Operation):
+    def __init__(self, axis: Axis) -> None:
+        self.axis = axis
+
+    def forward(self, a: np.ndarray) -> np.ndarray:
+        return np.transpose(a, self.axis)
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        axis = np.argsort(self.axis) if self.axis is not None else None
+        return np.transpose(g, axis)

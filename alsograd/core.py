@@ -22,9 +22,13 @@ def no_grad() -> Iterator[None]:
         enable_grad = True
 
 
+def into_parameter(data: Any, **kwargs):
+    return data if isinstance(data, Parameter) else Parameter(data, **kwargs)
+
+
 # Parameters with gradients
 class Parameter:
-    def __init__(self, data: Union[Parameter, np.ndarray, Iterable[Any]], requires_grad=True):
+    def __init__(self, data: Union[Parameter, np.ndarray, Iterable[Any]], requires_grad=True) -> None:
         self.data: np.ndarray = data.data if isinstance(data, Parameter) else np.asarray(data)
         self.requires_grad: bool = data.requires_grad if isinstance(data, Parameter) else requires_grad
 
@@ -109,22 +113,28 @@ class Parameter:
 
     # Operations
     def __add__(self, other) -> Parameter:
-        return ops.Add()(self, other)
+        return ops.Add()(self, into_parameter(other))
+    __radd__ = __iadd__ = __add__
 
     def __sub__(self, other) -> Parameter:
-        return ops.Sub()(self, other)
+        return ops.Sub()(self, into_parameter(other))
+    __rsub__ = __isub__ = __sub__
 
     def __mul__(self, other) -> Parameter:
-        return ops.Mul()(self, other)
+        return ops.Mul()(self, into_parameter(other))
+    __rmul__ = __imul__ = __mul__
 
-    def __div__(self, other) -> Parameter:
-        return ops.Div()(self, other)
+    def __truediv__(self, other) -> Parameter:
+        return ops.Div()(self, into_parameter(other))
+    __rtruediv__ = __itruediv__ = __truediv__
 
     def __pow__(self, exp: float) -> Parameter:
         return ops.Pow(exp=exp)(self)
+    __rpow__ = __ipow__ = __pow__
 
     def __matmul__(self, other) -> Parameter:
-        return ops.Dot()(self, other)
+        return ops.Dot()(self, into_parameter(other))
+    __rmatmul__ = __imatmul__ = __matmul__
 
     def sum(self, **kwargs) -> Parameter:
         return ops.Sum(**kwargs)(self)
@@ -135,8 +145,18 @@ class Parameter:
     def exp(self) -> Parameter:
         return ops.Exp()(self)
 
+    def log(self) -> Parameter:
+        return ops.Log()(self)
+
     def reshape(self, *shape: int) -> Parameter:
         return ops.Reshape(*shape)(self)
+
+    def transpose(self, **kwargs) -> Parameter:
+        return ops.Transpose(**kwargs)(self)
+
+    @property
+    def T(self) -> Parameter:
+        return self.transpose(axis=None)
 
 
 # Any operation on parameters
