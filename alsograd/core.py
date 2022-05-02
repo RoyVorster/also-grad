@@ -139,6 +139,9 @@ class Parameter:
     def __neg__(self) -> Parameter:
         return ops.Neg()(self)
 
+    def __getitem__(self, key: Any) -> Parameter:
+        return ops.Slice(key)(self)
+
     def sum(self, **kwargs) -> Parameter:
         return ops.Sum(**kwargs)(self)
 

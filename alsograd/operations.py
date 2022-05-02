@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Union, Sequence
+from typing import Optional, Tuple, Union, Sequence, Any
 import numpy as np
 
 from alsograd.utils import rev_sum
@@ -124,6 +124,22 @@ class Transpose(Operation):
     def backward(self, g: np.ndarray) -> np.ndarray:
         axis = np.argsort(self.axis) if self.axis is not None else None
         return np.transpose(g, axis)
+
+
+class Slice(Operation):
+    def __init__(self, key: Any) -> None:
+        self.key = key
+
+    def forward(self, a: np.ndarray) -> np.ndarray:
+        self.add_to_cache(a)
+        return a[self.key]
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        a, = self.cache
+        g_out = np.zeros_like(a)
+        g_out[self.key] = g
+
+        return g_out
 
 
 # Simple operations
