@@ -2,7 +2,7 @@ from typing import Optional, Tuple, Union, Sequence, Any
 import numpy as np
 
 from alsograd.utils import rev_sum
-from alsograd.core import Operation, OperationSimple
+from alsograd.core import Parameter, Operation, OperationSimple
 
 
 Axis = Union[None, Sequence[int]]
@@ -128,7 +128,7 @@ class Transpose(Operation):
 
 class Slice(Operation):
     def __init__(self, key: Any) -> None:
-        self.key = key
+        self.key = tuple(k.data if isinstance(k, Parameter) else k for k in key)
 
     def forward(self, a: np.ndarray) -> np.ndarray:
         self.add_to_cache(a)
