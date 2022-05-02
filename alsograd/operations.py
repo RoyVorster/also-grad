@@ -9,16 +9,14 @@ Axis = Union[None, Sequence[int]]
 
 
 class Pow(Operation):
-    def __init__(self, exp: float) -> None:
-        self.exp = exp
+    def forward(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
+        y = a**b
+        self.add_to_cache(a, b, y)
+        return y
 
-    def forward(self, a: np.ndarray) -> np.ndarray:
-        self.add_to_cache(a)
-        return a**self.exp
-
-    def backward(self, g: np.ndarray) -> np.ndarray:
-        a, = self.cache
-        return g*a*self.exp**(self.exp - 1)
+    def backward(self, g: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        a, b, y = self.cache
+        return rev_sum(g*b*a**(b - 1), a.shape), rev_sum(g*y*np.log(a), b.shape)
 
 
 class Add(Operation):

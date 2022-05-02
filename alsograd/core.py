@@ -22,8 +22,12 @@ def no_grad() -> Iterator[None]:
         enable_grad = True
 
 
-def into_parameter(data: Any, **kwargs):
-    return data if isinstance(data, Parameter) else Parameter(data, **kwargs)
+def wrap_parameters(f):
+    def wrapper(*args, **kwargs):
+        args = [arg if isinstance(arg, Parameter) else Parameter(arg, requires_grad=True) for arg in args]
+        return f(*args, **kwargs)
+
+    return wrapper
 
 
 # Parameters with gradients
@@ -110,28 +114,34 @@ class Parameter:
                     parent.grad = parent.grad + grad if parent.grad else grad
 
     # Operations
+    @wrap_parameters
     def __add__(self, other) -> Parameter:
-        return ops.Add()(self, into_parameter(other))
+        return ops.Add()(self, other)
     __radd__ = __iadd__ = __add__
 
+    @wrap_parameters
     def __sub__(self, other) -> Parameter:
-        return ops.Sub()(self, into_parameter(other))
+        return ops.Sub()(self, other)
     __rsub__ = __isub__ = __sub__
 
+    @wrap_parameters
     def __mul__(self, other) -> Parameter:
-        return ops.Mul()(self, into_parameter(other))
+        return ops.Mul()(self, other)
     __rmul__ = __imul__ = __mul__
 
+    @wrap_parameters
     def __truediv__(self, other) -> Parameter:
-        return ops.Div()(self, into_parameter(other))
+        return ops.Div()(self, other)
     __rtruediv__ = __itruediv__ = __truediv__
 
-    def __pow__(self, exp: float) -> Parameter:
-        return ops.Pow(exp=exp)(self)
+    @wrap_parameters
+    def __pow__(self, other) -> Parameter:
+        return ops.Pow()(self, other)
     __rpow__ = __ipow__ = __pow__
 
+    @wrap_parameters
     def __matmul__(self, other) -> Parameter:
-        return ops.Dot()(self, into_parameter(other))
+        return ops.Dot()(self, other)
     __rmatmul__ = __imatmul__ = __matmul__
 
     def __neg__(self) -> Parameter:
