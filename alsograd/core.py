@@ -40,16 +40,7 @@ class Parameter:
         self.creator: Optional[Operation] = None
 
     def __str__(self) -> str:
-        s = str(self.data)
-        if self.requires_grad:
-            if self.grad:
-                s += ', with gradient: ' + str(self.grad)
-            else:
-                s += ', with empty gradient'
-        else:
-            s += ', with no gradient required'
-
-        return s + '.'
+        return str(self.data)
 
     def detach(self) -> Parameter:
         if not self.requires_grad:
@@ -217,7 +208,7 @@ class Operation:
 
 
 # Very simple version of an operation
-class OperationSimple(Operation):
+class UnaryOperation(Operation):
     def __init__(self, forward: Callable[[np.ndarray], np.ndarray],
                  backward: Callable[[np.ndarray], np.ndarray]) -> None:
         self.f_forward, self.f_backward = forward, backward

@@ -2,7 +2,7 @@ from typing import Tuple, Union, Sequence, Any
 import numpy as np
 
 from alsograd.utils import rev_sum
-from alsograd.core import Parameter, Operation, OperationSimple
+from alsograd.core import Parameter, Operation, UnaryOperation
 
 
 Axis = Union[None, Sequence[int]]
@@ -142,20 +142,20 @@ class Slice(Operation):
 
 # Simple operations
 def Neg():
-    return OperationSimple(lambda x: -1*x, lambda x: -1*x)
+    return UnaryOperation(lambda x: -1*x, lambda x: -1*x)
 
 
 def Log():
-    return OperationSimple(np.log, lambda x: 1/x)
+    return UnaryOperation(np.log, lambda x: 1/x)
 
 
 def Exp():
-    return OperationSimple(np.exp, np.exp)
+    return UnaryOperation(np.exp, np.exp)
 
 
 def Sin():
-    return OperationSimple(np.sin, np.cos)
+    return UnaryOperation(np.sin, np.cos)
 
 
 def Cos():
-    return OperationSimple(np.cos, lambda x: -1*np.sin(x))
+    return UnaryOperation(np.cos, lambda x: -1*np.sin(x))
