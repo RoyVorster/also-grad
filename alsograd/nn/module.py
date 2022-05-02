@@ -31,7 +31,7 @@ class Module:
         for p in self.parameters:
             p.zero_grad()
 
-    forward: Callable[[Module, Parameter], Parameter]
+    forward: Callable[..., Parameter]
 
     def __call__(self, *args) -> Parameter:
         return self.forward(*args)
