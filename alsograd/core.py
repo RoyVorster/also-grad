@@ -100,10 +100,8 @@ class Parameter:
         # Go backward through the graph
         self.grad = Parameter(np.ones_like(self.data), requires_grad=False)
         for node in reversed(nodes):
-            if not (node and node.creator and node.grad):
-                continue
-
-            if not any(p.requires_grad for p in node.creator.parents):
+            if not node.creator or not node.grad or \
+                    not any(p.requires_grad for p in node.creator.parents):
                 continue
 
             grads = node.creator.backward_(node.grad.data)
