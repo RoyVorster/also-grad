@@ -142,7 +142,6 @@ class Parameter:
     @wrap_parameters
     def __matmul__(self, other) -> Parameter:
         return ops.Dot()(self, other)
-    __rmatmul__ = __imatmul__ = __matmul__
 
     def __neg__(self) -> Parameter:
         return ops.Neg()(self)
@@ -155,7 +154,7 @@ class Parameter:
 
     def mean(self, **kwargs) -> Parameter:
         s = self.sum(**kwargs)
-        return s*(np.prod(self.shape)/np.prod(s.shape))
+        return s*(np.prod(s.shape)/np.prod(self.shape))
 
     def max(self, **kwargs) -> Parameter:
         return ops.Max(**kwargs)(self)
