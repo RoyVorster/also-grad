@@ -48,7 +48,7 @@ class Mul(Operation):
 
     def backward(self, g: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         a, b = self.cache
-        return rev_sum(g*a, a.shape), rev_sum(g*b, b.shape)
+        return rev_sum(g*b, a.shape), rev_sum(g*a, b.shape)
 
 
 class Div(Operation):
