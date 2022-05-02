@@ -136,6 +136,9 @@ class Parameter:
         return ops.Dot()(self, into_parameter(other))
     __rmatmul__ = __imatmul__ = __matmul__
 
+    def __neg__(self) -> Parameter:
+        return ops.Neg()(self)
+
     def sum(self, **kwargs) -> Parameter:
         return ops.Sum(**kwargs)(self)
 
@@ -145,12 +148,6 @@ class Parameter:
 
     def max(self, **kwargs) -> Parameter:
         return ops.Max(**kwargs)(self)
-
-    def exp(self) -> Parameter:
-        return ops.Exp()(self)
-
-    def log(self) -> Parameter:
-        return ops.Log()(self)
 
     def reshape(self, *shape: int) -> Parameter:
         return ops.Reshape(*shape)(self)
@@ -164,6 +161,18 @@ class Parameter:
     @property
     def T(self) -> Parameter:
         return self.transpose(axis=None)
+
+    def exp(self) -> Parameter:
+        return ops.Exp()(self)
+
+    def log(self) -> Parameter:
+        return ops.Log()(self)
+
+    def sin(self) -> Parameter:
+        return ops.Sin()(self)
+
+    def cos(self) -> Parameter:
+        return ops.Cos()(self)
 
 
 # Any operation on parameters
@@ -195,6 +204,20 @@ class Operation:
             output.creator = copy(self)
 
         return output
+
+
+# Very simple version of an operation
+class OperationSimple(Operation):
+    def __init__(self, forward: Callable[[np.ndarray], np.ndarray],
+                 backward: Callable[[np.ndarray], np.ndarray]) -> None:
+        self.f_forward, self.f_backward = forward, backward
+
+    def forward(self, a: np.ndarray) -> np.ndarray:
+        return self.f_forward(a)
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        a, = self.cache
+        return g*self.f_backward(a)
 
 
 # Circular imports

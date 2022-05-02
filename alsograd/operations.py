@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 from typing import Optional, Tuple, Union, Sequence
 import numpy as np
 
 from alsograd.utils import rev_sum
-from alsograd.core import Operation
+from alsograd.core import Operation, OperationSimple
 
 
 Axis = Union[None, Sequence[int]]
@@ -21,26 +19,6 @@ class Pow(Operation):
     def backward(self, g: np.ndarray) -> np.ndarray:
         a, = self.cache
         return g*a*self.exp**(self.exp - 1)
-
-
-class Exp(Operation):
-    def forward(self, a: np.ndarray) -> np.ndarray:
-        self.add_to_cache(a)
-        return np.exp(a)
-
-    def backward(self, g: np.ndarray) -> np.ndarray:
-        a, = self.cache
-        return g*np.exp(a)
-
-
-class Log(Operation):
-    def forward(self, a: np.ndarray) -> np.ndarray:
-        self.add_to_cache(a)
-        return np.log(a)
-
-    def backward(self, g: np.ndarray) -> np.ndarray:
-        a, = self.cache
-        return g/a
 
 
 class Add(Operation):
@@ -146,3 +124,24 @@ class Transpose(Operation):
     def backward(self, g: np.ndarray) -> np.ndarray:
         axis = np.argsort(self.axis) if self.axis is not None else None
         return np.transpose(g, axis)
+
+
+# Simple operations
+def Neg():
+    return OperationSimple(lambda x: -1*x, lambda x: -1*x)
+
+
+def Log():
+    return OperationSimple(np.log, lambda x: 1/x)
+
+
+def Exp():
+    return OperationSimple(np.exp, np.exp)
+
+
+def Sin():
+    return OperationSimple(np.sin, np.cos)
+
+
+def Cos():
+    return OperationSimple(np.cos, lambda x: -1*np.sin(x))
