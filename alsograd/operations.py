@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Union, Sequence, Any
+from typing import Tuple, Union, Sequence, Any
 import numpy as np
 
 from alsograd.utils import rev_sum
@@ -74,18 +74,18 @@ class Sum(Operation):
 
 
 class Max(Operation):
-    def __init__(self, axis: Optional[int] = None):
+    def __init__(self, axis: Axis = None):
         self.axis = axis
 
     def forward(self, a: np.ndarray) -> np.ndarray:
-        out = np.amax(a, axis=self.axis)
+        out = np.amax(a, axis=self.axis, keepdims=True)
         self.add_to_cache(a, out)
         return out
 
     def backward(self, g: np.ndarray) -> np.ndarray:
         a, out = self.cache
         flow = (a == out)
-        return flow*g/flow.sum()
+        return flow*g/flow.sum(axis=self.axis, keepdims=True)
 
 
 # LA operations
