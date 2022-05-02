@@ -24,7 +24,7 @@ def no_grad() -> Iterator[None]:
 
 def wrap_parameters(f):
     def wrapper(*args, **kwargs):
-        args = [arg if isinstance(arg, Parameter) else Parameter(arg, requires_grad=True) for arg in args]
+        args = [arg if isinstance(arg, Parameter) else Parameter(arg, requires_grad=False) for arg in args]
         return f(*args, **kwargs)
 
     return wrapper
@@ -224,6 +224,7 @@ class OperationSimple(Operation):
         self.f_forward, self.f_backward = forward, backward
 
     def forward(self, a: np.ndarray) -> np.ndarray:
+        self.add_to_cache(a)
         return self.f_forward(a)
 
     def backward(self, g: np.ndarray) -> np.ndarray:
