@@ -11,7 +11,8 @@ def rev_sum(x: np.ndarray, shape: Tuple[int]):
     return x.sum(axis=tuple(axis)).reshape(shape) if len(axis) > 0 else x
 
 
-def axis_for_keepdims(in_shape: Sequence[int], axis: Axis) -> Tuple[Tuple[int, ...], List[int]]:
+# Maintain shape for backwards pass through reduce operations
+def shape_for_keepdims(in_shape: Sequence[int], axis: Axis) -> List[int]:
     ndim = len(in_shape)
     if axis is None:
         axis = range(ndim)
@@ -21,7 +22,7 @@ def axis_for_keepdims(in_shape: Sequence[int], axis: Axis) -> Tuple[Tuple[int, .
 
     axis = tuple([(ax + ndim) % ndim for ax in axis])
     out_shape = [s for i, s in enumerate(in_shape) if i not in axis]
-    return axis, out_shape if len(out_shape) else [1]
+    return out_shape if len(out_shape) else [1]
 
 
 def plural(x: Union[Iterable[Any], Any]) -> Tuple[Any, ...]:

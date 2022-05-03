@@ -1,7 +1,7 @@
 from typing import Tuple, Union
 import numpy as np
 
-from alsograd.utils import rev_sum, axis_for_keepdims, Axis
+from alsograd.utils import rev_sum, shape_for_keepdims, Axis
 from alsograd.core import Parameter, Operation, UnaryOperation
 
 
@@ -87,7 +87,7 @@ class Max(Operation):
 
 # Handle dimension change in reduce operations
 def reduce_op(op: Union[Max, Sum], a: Parameter, keepdims: bool = False) -> Parameter:
-    axis, out_shape = axis_for_keepdims(a.shape, op.axis)
+    out_shape = shape_for_keepdims(a.shape, op.axis)
 
     a_sum = op(a)
     if keepdims or a_sum.shape == out_shape:
