@@ -5,7 +5,7 @@ from copy import copy
 from typing import Iterator, Union, List, Tuple, Set, Any, Optional, Callable, Iterable
 import numpy as np
 
-from alsograd.utils import plural
+from alsograd.utils import plural, Axis
 
 
 # Top-level grad enabled flag
@@ -140,15 +140,15 @@ class Parameter:
     def __getitem__(self, key) -> Parameter:
         return ops.Slice(key)(self)
 
-    def sum(self, **kwargs) -> Parameter:
-        return ops.Sum(**kwargs)(self)
+    def sum(self, axis: Axis = None, keepdims: bool = False) -> Parameter:
+        return ops.reduce_op(ops.Sum(axis=axis), self, keepdims)
+
+    def max(self, axis: Axis = None, keepdims: bool = False) -> Parameter:
+        return ops.reduce_op(ops.Max(axis=axis), self, keepdims)
 
     def mean(self, **kwargs) -> Parameter:
         s = self.sum(**kwargs)
         return s*(np.prod(s.shape)/np.prod(self.shape))
-
-    def max(self, **kwargs) -> Parameter:
-        return ops.Max(**kwargs)(self)
 
     def reshape(self, *shape: int) -> Parameter:
         return ops.Reshape(*shape)(self)

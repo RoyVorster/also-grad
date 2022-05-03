@@ -1,11 +1,8 @@
-from typing import Tuple, Union, Sequence
+from typing import Tuple, Union
 import numpy as np
 
-from alsograd.utils import rev_sum
+from alsograd.utils import rev_sum, axis_for_keepdims, Axis
 from alsograd.core import Parameter, Operation, UnaryOperation
-
-
-Axis = Union[None, Sequence[int]]
 
 
 class Pow(Operation):
@@ -86,6 +83,17 @@ class Max(Operation):
         a, out = self.cache
         flow = (a == out)
         return flow*g/flow.sum(axis=self.axis, keepdims=True)
+
+
+# Handle dimension change in reduce operations
+def reduce_op(op: Union[Max, Sum], a: Parameter, keepdims: bool = False) -> Parameter:
+    axis, out_shape = axis_for_keepdims(a.shape, op.axis)
+
+    a_sum = op(a)
+    if keepdims or a_sum.shape == out_shape:
+        return a_sum
+
+    return Reshape(*out_shape)(a_sum)
 
 
 # LA operations
