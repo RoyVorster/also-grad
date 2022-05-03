@@ -150,7 +150,7 @@ class Slice(Operation):
 
 # Simple operations
 def Neg():
-    return UnaryOperation(lambda x: -1*x, lambda x: -1*x)
+    return UnaryOperation(lambda x: -1*x, lambda x: -1)
 
 
 def Log():
