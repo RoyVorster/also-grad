@@ -1,4 +1,4 @@
-from typing import Tuple, Union, Sequence, Any
+from typing import Tuple, Union, Sequence
 import numpy as np
 
 from alsograd.utils import rev_sum
@@ -125,7 +125,7 @@ class Transpose(Operation):
 
 
 class Slice(Operation):
-    def __init__(self, key: Any) -> None:
+    def __init__(self, key: Tuple[slice, ...]) -> None:
         self.key = tuple(k.data if isinstance(k, Parameter) else k for k in key)
 
     def forward(self, a: np.ndarray) -> np.ndarray:
