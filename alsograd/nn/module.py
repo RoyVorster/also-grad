@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import Dict, List, Any, Callable
+from typing import Set, Any, Callable, Generator
 
 from alsograd.core import Parameter
 
@@ -8,27 +6,26 @@ from alsograd.core import Parameter
 # Very simple PyTorch like module implementation
 class Module:
     def __init__(self) -> None:
-        self._parameters: Dict[str, Parameter] = {}
-        self._modules: Dict[str, Module] = {}
+        self._parameters: Set[str] = set()
+        self._modules: Set[str] = set()
 
     def __setattr__(self, name: str, value: Any) -> None:
         if isinstance(value, Parameter):
-            self._parameters[name] = value
+            self._parameters.add(name)
         elif isinstance(value, Module):
-            self._modules[name] = value
+            self._modules.add(name)
 
         object.__setattr__(self, name, value)
 
-    @property
-    def parameters(self) -> List[Parameter]:
-        p = list(self._parameters.values())
-        for m in self._modules.values():
-            p += m.parameters
+    # Generator to deal with references
+    def parameters(self) -> Generator[Parameter, None, None]:
+        yield from (self.__dict__[p] for p in self._parameters)
 
-        return p
+        for m in self._modules:
+            yield from self.__dict__[m].parameters()
 
     def zero_grad(self) -> None:
-        for p in self.parameters:
+        for p in self.parameters():
             p.zero_grad()
 
     forward: Callable[..., Parameter]

@@ -1,6 +1,4 @@
-from __future__ import annotations
-
-from typing import Callable, List
+from typing import Callable
 
 from alsograd.core import Parameter
 from alsograd.nn.module import Module
@@ -9,7 +7,6 @@ from alsograd.nn.module import Module
 class Optimizer:
     def __init__(self, model: Module) -> None:
         self.model = model
-        self.parameters: List[Parameter] = model.parameters
 
     parameter_step: Callable[[Parameter], None]
 
@@ -17,7 +14,7 @@ class Optimizer:
         self.model.zero_grad()
 
     def step(self):
-        for p in self.parameters:
+        for p in self.model.parameters():
             self.parameter_step(p)
 
 
@@ -26,6 +23,6 @@ class SGD(Optimizer):
         super().__init__(model)
         self.learning_rate = learning_rate
 
-    def parameter_step(self, parameter: Parameter) -> None:
-        if parameter.grad:
-            parameter -= self.learning_rate*parameter.grad
+    def parameter_step(self, p: Parameter) -> None:
+        if p.grad:
+            p.data -= self.learning_rate*p.grad.data
