@@ -50,11 +50,15 @@ class Parameter:
         return Parameter(self.data, requires_grad=False)
 
     def zero_grad(self) -> None:
-        self.grad, self.creator = None, None
+        self.grad = None
 
     @property
     def shape(self) -> Tuple[int, ...]:
         return self.data.shape
+
+    @property
+    def ndim(self) -> int:
+        return self.data.ndim
 
     @classmethod
     def zeros(cls, *shape: int, **kwargs) -> Parameter:
