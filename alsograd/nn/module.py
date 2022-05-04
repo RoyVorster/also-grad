@@ -24,6 +24,10 @@ class Module:
         for m in self._modules:
             yield from self.__dict__[m].parameters()
 
+    @property
+    def n_parameters(self) -> int:
+        return len(list(self.parameters()))
+
     def zero_grad(self) -> None:
         for p in self.parameters():
             p.zero_grad()
