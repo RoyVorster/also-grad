@@ -1,8 +1,8 @@
 from typing import Tuple, Union
 import numpy as np
 
-from alsograd.utils import rev_sum, shape_for_keepdims, Axis
-from alsograd.core import Parameter, Operation, UnaryOperation
+from alsograd.utils import rev_sum, shape_for_keepdims, Axis, Order
+from alsograd.core import Parameter, Operation, UnaryOperation, ReduceOperation
 
 
 class Pow(Operation):
@@ -57,9 +57,9 @@ class Div(Operation):
 
 
 # Reduce operations
-class Sum(Operation):
+class Sum(ReduceOperation):
     def __init__(self, axis: Axis = None):
-        self.axis = axis
+        super().__init__(axis)
 
     def forward(self, a: np.ndarray) -> np.ndarray:
         self.add_to_cache(a.shape)
@@ -70,9 +70,9 @@ class Sum(Operation):
         return np.broadcast_to(g, a_shape)
 
 
-class Max(Operation):
+class Max(ReduceOperation):
     def __init__(self, axis: Axis = None):
-        self.axis = axis
+        super().__init__(axis)
 
     def forward(self, a: np.ndarray) -> np.ndarray:
         out = np.amax(a, axis=self.axis, keepdims=True)
@@ -86,7 +86,7 @@ class Max(Operation):
 
 
 # Handle dimension change in reduce operations
-def reduce_op(op: Union[Max, Sum], a: Parameter, keepdims: bool = False) -> Parameter:
+def reduce_op(op: ReduceOperation, a: Parameter, keepdims: bool = False) -> Parameter:
     out_shape = shape_for_keepdims(a.shape, op.axis)
 
     a_sum = op(a)
@@ -121,14 +121,14 @@ class Reshape(Operation):
 
 
 class Transpose(Operation):
-    def __init__(self, axis: Axis) -> None:
-        self.axis = axis
+    def __init__(self, order: Order) -> None:
+        self.order = order
 
     def forward(self, a: np.ndarray) -> np.ndarray:
-        return np.transpose(a, self.axis)
+        return np.transpose(a, self.order)
 
     def backward(self, g: np.ndarray) -> np.ndarray:
-        axis = np.argsort(self.axis) if self.axis is not None else None
+        axis = np.argsort(self.order) if self.order is not None else None
         return np.transpose(g, axis)
 
 

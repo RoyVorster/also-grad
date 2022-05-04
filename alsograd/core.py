@@ -214,7 +214,6 @@ class Operation:
         return output
 
 
-# Very simple version of an operation
 class UnaryOperation(Operation):
     def __init__(self, forward: Callable[[np.ndarray], np.ndarray],
                  backward: Callable[[np.ndarray], np.ndarray]) -> None:
@@ -227,6 +226,11 @@ class UnaryOperation(Operation):
     def backward(self, g: np.ndarray) -> np.ndarray:
         a, = self.cache
         return g*self.f_backward(a)
+
+
+class ReduceOperation(Operation):
+    def __init__(self, axis: Axis):
+        self.axis = axis
 
 
 # Circular imports
