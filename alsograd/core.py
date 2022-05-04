@@ -73,6 +73,10 @@ class Parameter:
         return cls(np.random.rand(*shape).astype(np.float32), **kwargs)
 
     @classmethod
+    def randn(cls, *shape: int, **kwargs) -> Parameter:
+        return cls(np.random.randn(*shape).astype(np.float32), **kwargs)
+
+    @classmethod
     def init(cls, *shape: int, **kwargs) -> Parameter:
         # Standard uniform initialization
         data = np.random.uniform(-1, 1, shape)/np.sqrt(np.prod(shape))
@@ -157,8 +161,9 @@ class Parameter:
     def reshape(self, *shape: int) -> Parameter:
         return ops.Reshape(*shape)(self)
 
-    def ravel(self) -> Parameter:
-        return self.reshape(-1)
+    def ravel(self, i_start: int = 0) -> Parameter:
+        s = self.shape[:i_start]
+        return self.reshape(*s, -1)
 
     def transpose(self, **kwargs) -> Parameter:
         return ops.Transpose(**kwargs)(self)
