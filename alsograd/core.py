@@ -179,6 +179,9 @@ class Parameter:
     def cos(self) -> Parameter:
         return ops.Cos()(self)
 
+    def sqrt(self) -> Parameter:
+        return self**0.5
+
 
 # Any operation on parameters
 class Operation:
