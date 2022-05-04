@@ -32,7 +32,7 @@ class Module:
         for p in self.parameters():
             p.zero_grad()
 
-    def forward(self, a: Parameter) -> Parameter:
-        raise NotImplementedError
+    forward: Callable[..., Parameter]
 
-    __call__ = forward
+    def __call__(self, *args) -> Parameter:
+        return self.forward(*args)
