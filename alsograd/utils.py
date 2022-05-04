@@ -2,7 +2,7 @@ from typing import Tuple, Union, Iterable, Any, List, Sequence
 import numpy as np
 
 
-Axis = Union[None, Sequence[int]]
+Axis = Union[None, int, Sequence[int]]
 
 
 # Backwards pass through np broadcasting
