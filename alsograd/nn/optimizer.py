@@ -73,8 +73,11 @@ class Adam(Optimizer):
 
             self.m[index] = m_new
 
-        den = (np.sqrt(v_new) + self.delta) if use_rms else np.ones_like(g)
-        p.data -= self.learning_rate*m_new/den
+        update = self.learning_rate*m_new
+        if use_rms:
+            update /= (np.sqrt(v_new) + self.delta)
+
+        p.data -= update
 
         self.t += 1
 
