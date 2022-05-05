@@ -26,5 +26,8 @@ def shape_for_keepdims(in_shape: Sequence[int], axis: Axis) -> List[int]:
     return out_shape if len(out_shape) else [1]
 
 
-def plural(x: Union[Iterable[Any], Any]) -> Tuple[Any, ...]:
-    return x if isinstance(x, tuple) else (x, )
+def plural(x: Union[Sequence[Any], Any]) -> Tuple[Any, ...]:
+    if isinstance(x, Sequence):
+        return tuple(x)
+
+    return (x, )

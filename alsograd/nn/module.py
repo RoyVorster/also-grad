@@ -1,6 +1,7 @@
-from typing import Set, Any, Callable, Generator
+from typing import Set, Any, Sequence, Callable, Generator
 
 from alsograd.core import Parameter
+from alsograd.utils import plural
 
 
 # Very simple PyTorch like module implementation
@@ -9,26 +10,34 @@ class Module:
         self._parameters: Set[str] = set()
         self._modules: Set[str] = set()
 
-    def __setattr__(self, name: str, value: Any) -> None:
-        if isinstance(value, Parameter):
-            self._parameters.add(name)
-        elif isinstance(value, Module):
-            self._modules.add(name)
+    def __setattr__(self, key: str, value: Any) -> None:
+        # Check whether parameters in list (i.e. sequential)
+        value_t = value
+        if isinstance(value, (tuple, list)):
+            value = list(filter(lambda v: isinstance(v, (Parameter, Module)), value))
+            assert all(type(v) == type(value[0]) for v in value), \
+                f"Not all types in sequence are the same for attr. {key}"
 
-        object.__setattr__(self, name, value)
+            value_t = value[0]
+
+        if isinstance(value_t, Parameter):
+            self._parameters.add(key)
+        elif isinstance(value_t, Module):
+            self._modules.add(key)
+
+        object.__setattr__(self, key, value)
 
     # Generator to deal with references
     def parameters(self) -> Generator[Parameter, None, None]:
-        yield from (self.__dict__[p] for p in self._parameters)
+        for k in self._parameters:
+            yield from plural(self.__dict__[k])
 
-        for m in self._modules:
-            yield from self.__dict__[m].parameters()
+        for k in self._modules:
+            for m in plural(self.__dict__[k]):
+                yield from m.parameters()
 
-    @property
-    def n_parameters(self) -> int:
+    def __len__(self) -> int:
         return len(list(self.parameters()))
-
-    __len__ = n_parameters
 
     def zero_grad(self) -> None:
         for p in self.parameters():
