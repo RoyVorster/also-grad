@@ -15,7 +15,7 @@ class Module:
         is_seq = isinstance(value, (tuple, list))
         if is_seq:
             value = list(filter(lambda v: isinstance(v, (Parameter, Module)), value))
-            assert all(type(v) == type(value[0]) for v in value), \
+            assert all(type(v) == type(value[0]) for v in value),\
                 f"Not all types in sequence are the same for attr. {key}"
 
         value_t = value[0] if is_seq else value

@@ -20,41 +20,32 @@ class Optimizer:
             self.parameter_step(i, p)
 
 
-class SGD(Optimizer):
-    def __init__(self, model: Module, learning_rate: float = 1e-4, momentum: float = 0) -> None:
+class Adam(Optimizer):
+    def __init__(self, model: Module, learning_rate: float = 1e-3, momentum: float = 0.9,
+                 beta: float = 0.99, beta_inv: Optional[float] = None, bias_correction: bool = True,
+                 delta: float = 1e-4) -> None:
         super().__init__(model)
 
         self.learning_rate = learning_rate
+
+        # SGD
         self.momentum = momentum
+        assert self.momentum >= 0 and self.momentum <= 1,\
+            f"Incorrect momentum variable ({momentum})for RMSProp step"
 
-        # State
-        self.grad_prev: List[Optional[np.ndarray]] = [None]*len(self.model)
+        # RMSProp
+        self.beta, self.beta_inv = beta, (1 - beta) if beta_inv is None else beta_inv
+        assert self.beta == 0 or (self.beta == 1 and self.beta_inv == 1) or (self.beta <= 1 and beta_inv is None),\
+            f"Incorrect beta ({self.beta}) variable for RMSProp step"
 
-    def parameter_step(self, index: int, p: Parameter) -> None:
-        if not p.grad:
-            return
-
-        g = p.grad.data
-        if self.momentum > 0:
-            g_prev = self.grad_prev[index]
-            g = g*(1 - self.momentum) + self.momentum*(g if g_prev is None else g_prev)
-
-            self.grad_prev[index] = g
-
-        p.data -= self.learning_rate*g
-
-AdaGrad = partial(RMSProp, alpha=1, beta=1)
-class RMSProp(Optimizer):
-    def __init__(self, model: Module, learning_rate: float = 1e-4, alpha: float = 0.9,
-                 beta: Optional[float] = None, delta: float = 1e-5) -> None:
-        super().__init__(model)
-
-        self.learning_rate = learning_rate
-        self.alpha, self.beta = alpha, (1 - alpha) if beta is None else beta
         self.delta = delta
+        self.bias_correction = bias_correction
 
         # State
-        self.g: List[Optional[np.ndarray]] = [None]*len(self.model)
+        self.v: List[Optional[np.ndarray]] = [None]*len(self.model)
+        self.m: List[Optional[np.ndarray]] = [None]*len(self.model)
+
+        self.t: int = 1
 
     def parameter_step(self, index: int, p: Parameter) -> None:
         if not p.grad:
@@ -62,8 +53,33 @@ class RMSProp(Optimizer):
 
         g = p.grad.data
 
-        g_prev = self.g[index]
-        g_new = self.alpha*(g_prev if g_prev is not None else np.zeros_like(g)) + self.beta*g**2
+        use_rms = self.beta > 0 and self.beta_inv > 0
+        if use_rms:
+            v_prev = self.v[index]
+            v_new = self.beta*(np.zeros_like(g) if v_prev is None else v_prev) + self.beta_inv*g**2
 
-        p.data -= self.learning_rate*g/(np.sqrt(g_new) + self.delta)
-        self.g[index] = g_new
+            if self.bias_correction:
+                v_new = v_new/(1 - self.beta**self.t)
+
+            self.v[index] = v_new
+
+        m_new = g
+        if self.momentum > 0:
+            m_prev = self.m[index]
+            m_new = self.momentum*(np.zeros_like(g) if m_prev is None else m_prev) + (1 - self.momentum)*g
+
+            if self.bias_correction:
+                m_new = m_new/(1 - self.momentum**self.t)
+
+            self.m[index] = m_new
+
+        den = (np.sqrt(v_new) + self.delta) if use_rms else np.ones_like(g)
+        p.data -= self.learning_rate*m_new/den
+
+        self.t += 1
+
+
+# All optimizers are just subsets of Adam
+SGD = partial(Adam, beta=0, beta_inv=0, bias_correction=False)
+RMSProp = partial(Adam, momentum=0, bias_correction=False)
+AdaGrad = partial(Adam, beta=1, beta_inv=1, momentum=0, bias_correction=False)
