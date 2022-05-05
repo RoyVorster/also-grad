@@ -15,7 +15,7 @@ class Linear(Module):
         self.b = Parameter.zeros(out_size)
 
     def forward(self, x: Parameter) -> Parameter:
-        return F.addmm(x, self.w, self.b)
+        return F.addmm(x, self.b, self.w)
 
 
 class Conv2D(Module):
