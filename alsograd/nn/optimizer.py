@@ -1,5 +1,6 @@
 import numpy as np
 from typing import Callable, Optional, List
+from functools import partial
 
 from alsograd.core import Parameter
 from alsograd.nn.module import Module
@@ -43,11 +44,12 @@ class SGD(Optimizer):
         p.data -= self.learning_rate*g
 
 
-class AdaGrad(Optimizer):
-    def __init__(self, model: Module, learning_rate: float = 1e-4, delta: float = 1e-5) -> None:
+class RMSProp(Optimizer):
+    def __init__(self, model: Module, learning_rate: float = 1e-4, alpha: float = 0.9, delta: float = 1e-5) -> None:
         super().__init__(model)
 
         self.learning_rate = learning_rate
+        self.alpha = alpha
         self.delta = delta
 
         # State
@@ -60,7 +62,10 @@ class AdaGrad(Optimizer):
         g = p.grad.data
 
         g_prev = self.g[index]
-        g_new = (g_prev if g_prev is not None else np.zeros_like(g)) + g**2
+        g_new = self.alpha*(g_prev if g_prev is not None else np.zeros_like(g)) + (1 - self.alpha)*g**2
 
         p.data -= self.learning_rate*g/(np.sqrt(g_new) + self.delta)
         self.g[index] = g_new
+
+
+AdaGrad = partial(RMSProp, alpha=0)
