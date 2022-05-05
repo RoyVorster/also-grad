@@ -180,7 +180,7 @@ class Parameter:
 
     @property
     def T(self) -> Parameter:
-        return self.transpose(axis=None)
+        return self.transpose(order=None)
 
     def exp(self) -> Parameter:
         return ops.exp()(self)
