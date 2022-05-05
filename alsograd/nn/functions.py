@@ -9,6 +9,10 @@ def relu(a: Parameter) -> Parameter:
     return a.clamp(a_min=0, a_max=None)
 
 
+def sigmoid(a: Parameter) -> Parameter:
+    return (1. + (-1.*a).exp())**-1.
+
+
 def softmax(a: Parameter) -> Parameter:
     new_shape = list(a.shape)
     new_shape[-1] = 1
