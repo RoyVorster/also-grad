@@ -2,6 +2,7 @@ from typing import Tuple, Sequence, Callable
 import numpy as np
 
 from alsograd.core import Parameter
+from alsograd.utils import Axis
 from alsograd.nn.module import Module
 
 
@@ -59,7 +60,7 @@ class Conv2D(Module):
 
 # Pooling layers
 class OpPool2D(Module):
-    def __init__(self, f_pool: Callable[[Parameter], Parameter],
+    def __init__(self, f_pool: Callable[[Parameter, Axis], Parameter],
                  kernel_size: Tuple[int, int]):
         super().__init__()
 
@@ -67,21 +68,22 @@ class OpPool2D(Module):
         self.f_pool = f_pool  # Hook after pooling
 
     def forward(self, x: Parameter) -> Parameter:
-        _, _, H, W = x.shape
-        xp = x[:, :, :H - (H % self.ky), :W - (W % self.kx)]
+        H, W = x.shape[-2:]
+        xp = x[..., :H - (H % self.ky), :W - (W % self.kx)]
 
-        N, C, H, W = xp.shape
-        xp = xp.reshape(N, C, H//self.ky, self.ky, H//self.kx, self.kx)
-        return self.f_pool(xp)
+        s, (H, W) = xp.shape[:-2], xp.shape[-2:]
+        xp = xp.reshape(*s, H//self.ky, self.ky, H//self.kx, self.kx)
+
+        return self.f_pool(xp, (-3, -1))
 
 
 def MaxPool2D(kernel_size: Tuple[int, int] = (2, 2)):
-    f_pool = lambda x: x.max(axis=(3, 5))
+    f_pool = lambda x, axis: x.max(axis=axis)
     return OpPool2D(f_pool, kernel_size)
 
 
 def AvgPool2D(kernel_size: Tuple[int, int] = (2, 2)):
-    f_pool = lambda x: x.mean(axis=(3, 5))
+    f_pool = lambda x, axis: x.mean(axis=axis)
     return OpPool2D(f_pool, kernel_size)
 
 
