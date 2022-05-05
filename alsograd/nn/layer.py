@@ -1,21 +1,21 @@
-from typing import Tuple, Sequence, Callable
+from typing import Tuple, Sequence, Callable, List
 import numpy as np
 
 from alsograd.core import Parameter
 from alsograd.utils import Axis
 from alsograd.nn.module import Module
+import alsograd.nn.functions as F
 
 
 class Linear(Module):
-    def __init__(self, in_neurons: int, out_neurons: int):
+    def __init__(self, in_size: int, out_size: int):
         super().__init__()
 
-        self.w = Parameter.init(in_neurons, out_neurons)
-        self.b = Parameter.zeros(out_neurons)
+        self.w = Parameter.init(in_size, out_size)
+        self.b = Parameter.zeros(out_size)
 
     def forward(self, x: Parameter) -> Parameter:
-        b_shape = [1]*(x.ndim - 1) + [-1]  # Batch reshape
-        return x@self.w + self.b.reshape(*b_shape)
+        return F.addmm(x, self.w, self.b)
 
 
 class Conv2D(Module):
@@ -94,7 +94,35 @@ def AvgPool2D(kernel_size: Tuple[int, int] = (2, 2)):
     return OpPool2D(f_pool, kernel_size)
 
 
-# Other
+class RNN(Module):
+    def __init__(self, in_size: int, hidden_size: int):
+        super().__init__()
+
+        self.hidden_size = hidden_size
+
+        self.w_xh = Parameter.init(in_size, hidden_size)
+        self.b_xh = Parameter.init(hidden_size)
+
+        self.w_hh = Parameter.init(in_size, hidden_size)
+        self.b_hh = Parameter.init(hidden_size)
+
+    def forward(self, x: Parameter) -> Parameter:
+        x = x.transpose(order=(0, 1))
+        T, N, _ = x.shape
+
+        h = Parameter.zeros(N, self.hidden_size)
+
+        ys: List[Parameter] = []
+        for t in range(T):
+            xh = F.addmm(x, self.b_xh, self.w_xh)
+            hh = F.addmm(h, self.b_hh, self.w_hh)
+
+            h = (xh + hh).tanh()
+            ys.append(h)
+
+        return F.stack(ys, axis=0).transpose(order=(0, 1))
+
+
 class Sequential(Module):
     def __init__(self, layers: Sequence[Callable[[Parameter], Parameter]]):
         super().__init__()
