@@ -66,7 +66,7 @@ class Conv2D(Module):
 
 
 # Pooling layers
-class OpPool2D(Module):
+class Pool2D(Module):
     def __init__(self, f_pool: Callable[[Parameter, Axis], Parameter],
                  kernel_size: Tuple[int, int]):
         super().__init__()
@@ -86,12 +86,12 @@ class OpPool2D(Module):
 
 def MaxPool2D(kernel_size: Tuple[int, int] = (2, 2)):
     f_pool = lambda x, axis: x.max(axis=axis)
-    return OpPool2D(f_pool, kernel_size)
+    return Pool2D(f_pool, kernel_size)
 
 
 def AvgPool2D(kernel_size: Tuple[int, int] = (2, 2)):
     f_pool = lambda x, axis: x.mean(axis=axis)
-    return OpPool2D(f_pool, kernel_size)
+    return Pool2D(f_pool, kernel_size)
 
 
 class RNN(Module):
