@@ -160,6 +160,45 @@ class GRU(Module):
         return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
 
 
+class LSTM(Module):
+    def __init__(self, in_size: int, hidden_size: int):
+        super().__init__()
+
+        self.hidden_size = hidden_size
+        self.p_size = 4*hidden_size
+
+        std = 1/np.sqrt(hidden_size)
+        self.w_xh = Parameter.uniform(in_size, self.p_size, lo=-std, hi=std)
+        self.b_xh = Parameter.uniform(self.p_size, lo=-std, hi=std)
+
+        self.w_hh = Parameter.uniform(hidden_size, self.p_size, lo=-std, hi=std)
+        self.b_hh = Parameter.uniform(self.p_size, lo=-std, hi=std)
+
+    def forward(self, x: Parameter) -> Parameter:
+        x = x.transpose(order=(1, 0, 2))
+        T, N, _ = x.shape
+
+        H = self.hidden_size
+        h, c = Parameter.zeros(N, H, requires_grad=False), Parameter.zeros(N, H, requires_grad=False)
+
+        ys: List[Parameter] = []
+        for t in range(T):
+            xh = F.addmm(x[t, ...], self.b_xh, self.w_xh)
+            hh = F.addmm(h, self.b_hh, self.w_hh)
+
+            it = F.sigmoid(xh[:, :H] + hh[:, :H])
+            ft = F.sigmoid(xh[:, H:2*H] + hh[:, H:2*H])
+            gt = (xh[:, 2*H:3*H] + hh[:, 2*H:3*H]).tanh()
+            ot = F.sigmoid(xh[:, 3*H:] + hh[:, 3*H:])
+
+            c = ft*c + it*gt
+            h = ot*c.tanh()
+
+            ys.append(h)
+
+        return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
+
+
 class Sequential(Module):
     def __init__(self, layers: Sequence[Callable[[Parameter], Parameter]]):
         super().__init__()
