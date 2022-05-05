@@ -196,3 +196,7 @@ def sin():
 
 def cos():
     return UnaryOperation(np.cos, lambda x: -1*np.sin(x))
+
+
+def tanh():
+    return UnaryOperation(np.tanh, lambda x: 1 - tanh(x)**2)

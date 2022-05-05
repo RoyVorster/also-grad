@@ -190,6 +190,9 @@ class Parameter:
     def cos(self) -> Parameter:
         return ops.cos()(self)
 
+    def tanh(self) -> Parameter:
+        return ops.tanh()(self)
+
     def sqrt(self) -> Parameter:
         return self**0.5
 
