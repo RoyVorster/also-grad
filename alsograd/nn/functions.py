@@ -49,4 +49,4 @@ class Stack(Operation):
 
 
 def stack(x: Sequence[Parameter], axis: int = -1) -> Parameter:
-    return Stack(axis=axis)(x)
+    return Stack(axis=axis)(*x)
