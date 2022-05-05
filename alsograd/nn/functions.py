@@ -14,24 +14,19 @@ def sigmoid(a: Parameter) -> Parameter:
 
 
 def softmax(a: Parameter) -> Parameter:
-    new_shape = list(a.shape)
-    new_shape[-1] = 1
+    new_shape = list(a.shape)[:-1] + [1]
 
     err = (a - a.max(axis=-1).reshape(*new_shape)).exp()
     return err/err.sum(axis=-1).reshape(*new_shape)
 
 
-def log_softmax(a: Parameter) -> Parameter:
-    new_shape = list(a.shape)
-    new_shape[-1] = 1
-
-    a_max = a.max(axis=-1).reshape(*new_shape)
-    return a_max + (a - a_max).exp().sum(axis=-1).reshape(*new_shape).log()
-
-
 # Losses
-def MSE(y_true: Parameter, y_pred: Parameter) -> Parameter:
+def MSE(y_pred: Parameter, y_true: Parameter) -> Parameter:
     return ((y_true - y_pred)**2).mean()
+
+
+def cross_entropy_loss(y_pred: Parameter, y_true: Parameter) -> Parameter:
+    return (-softmax(y_pred).log()*y_true).sum(axis=1).mean()
 
 
 # Functions
