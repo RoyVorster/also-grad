@@ -77,6 +77,10 @@ class Parameter:
         return cls(np.random.randn(*shape).astype(np.float32), **kwargs)
 
     @classmethod
+    def uniform(cls, *shape: int, lo: float = 0, hi: float = 1, **kwargs) -> Parameter:
+        return cls(np.random.uniform(low=lo, high=hi, size=shape).astype(np.float32), **kwargs)
+
+    @classmethod
     def init(cls, *shape: int, **kwargs) -> Parameter:
         # Standard uniform initialization
         data = np.random.uniform(-1, 1, shape)/np.sqrt(np.prod(shape))
@@ -91,8 +95,8 @@ class Parameter:
         seen: Set[Parameter] = set()
 
         def dfs_(node: Parameter):
-            # If can go forward, keep going
             if node not in seen and node.builder:
+                seen.add(node)
                 for new_node in node.builder.parents:
                     dfs_(new_node)
 
