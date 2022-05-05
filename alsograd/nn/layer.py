@@ -123,6 +123,41 @@ class RNN(Module):
         return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
 
 
+class GRU(Module):
+    def __init__(self, in_size: int, hidden_size: int):
+        super().__init__()
+
+        self.hidden_size = hidden_size
+        self.p_size = 3*hidden_size
+
+        self.w_xh = Parameter.init(in_size, self.p_size)
+        self.b_xh = Parameter.init(self.p_size)
+
+        self.w_hh = Parameter.init(hidden_size, self.p_size)
+        self.b_hh = Parameter.init(self.p_size)
+
+    def forward(self, x: Parameter) -> Parameter:
+        x = x.transpose(order=(1, 0, 2))
+        T, N, _ = x.shape
+
+        H = self.hidden_size
+        h = Parameter.zeros(N, H)
+
+        ys: List[Parameter] = []
+        for t in range(T):
+            xh = F.addmm(x[t, ...], self.b_xh, self.w_xh)
+            hh = F.addmm(h, self.b_hh, self.w_hh)
+
+            rt = F.sigmoid(xh[:, :H] + hh[:, :H])
+            zt = F.sigmoid(xh[:, H:2*H] + hh[:, H:2*H])
+            nt = (xh[:, 2*H:] + rt*hh[:, 2*H:]).tanh()
+
+            ht = (1 - zt)*nt + zt*h
+            ys.append(h)
+
+        return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
+
+
 class Sequential(Module):
     def __init__(self, layers: Sequence[Callable[[Parameter], Parameter]]):
         super().__init__()
