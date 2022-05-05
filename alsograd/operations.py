@@ -179,7 +179,7 @@ class Clamp(Operation):
 
 # Unary operations
 def neg():
-    return UnaryOperation(lambda x: -1*x, lambda: -1)
+    return UnaryOperation(lambda x: -1*x, lambda _: -1)
 
 
 def log():
