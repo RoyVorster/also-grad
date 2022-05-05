@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import Set, Any, Sequence, Callable, Generator
 
 from alsograd.core import Parameter
@@ -28,11 +30,11 @@ class Module:
 
         object.__setattr__(self, key, value)
 
+    # Generator to deal with references
     def modules(self) -> Generator[Module, None, None]:
         for k in self._modules:
             yield from plural(self.__dict__[k])
 
-    # Generator to deal with references
     def parameters(self) -> Generator[Parameter, None, None]:
         for k in self._parameters:
             yield from plural(self.__dict__[k])
