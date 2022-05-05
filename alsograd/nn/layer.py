@@ -103,24 +103,24 @@ class RNN(Module):
         self.w_xh = Parameter.init(in_size, hidden_size)
         self.b_xh = Parameter.init(hidden_size)
 
-        self.w_hh = Parameter.init(in_size, hidden_size)
+        self.w_hh = Parameter.init(hidden_size, hidden_size)
         self.b_hh = Parameter.init(hidden_size)
 
     def forward(self, x: Parameter) -> Parameter:
-        x = x.transpose(order=(0, 1))
+        x = x.transpose(order=(1, 0, 2))
         T, N, _ = x.shape
 
         h = Parameter.zeros(N, self.hidden_size)
 
         ys: List[Parameter] = []
         for t in range(T):
-            xh = F.addmm(x, self.b_xh, self.w_xh)
+            xh = F.addmm(x[t, ...], self.b_xh, self.w_xh)
             hh = F.addmm(h, self.b_hh, self.w_hh)
 
             h = (xh + hh).tanh()
             ys.append(h)
 
-        return F.stack(ys, axis=0).transpose(order=(0, 1))
+        return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
 
 
 class Sequential(Module):
