@@ -28,6 +28,8 @@ class Module:
     def n_parameters(self) -> int:
         return len(list(self.parameters()))
 
+    __len__ = n_parameters
+
     def zero_grad(self) -> None:
         for p in self.parameters():
             p.zero_grad()

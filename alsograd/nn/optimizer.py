@@ -27,7 +27,7 @@ class SGD(Optimizer):
         self.momentum = momentum
 
         # State
-        self.grad_prev: List[Optional[np.ndarray]] = [None]*self.model.n_parameters
+        self.grad_prev: List[Optional[np.ndarray]] = [None]*len(self.model)
 
     def parameter_step(self, index: int, p: Parameter) -> None:
         if p.grad:
