@@ -207,7 +207,7 @@ class Operation:
         return Parameter(self.forward(*[p.data for p in parameters]), requires_grad=requires_grad)
 
     def backward_(self, g: np.ndarray) -> List[Parameter]:
-        return [Parameter(x, requires_grad=True) for x in plural(self.backward(g))]
+        return [Parameter(x, requires_grad=False) for x in plural(self.backward(g))]
 
     def __call__(self, *parameters) -> Parameter:
         self.reset()
