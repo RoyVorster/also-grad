@@ -8,6 +8,8 @@ from alsograd.utils import plural
 
 # Very simple PyTorch like module implementation
 class Module:
+    AttrTypes = (Parameter, Module)
+
     def __init__(self) -> None:
         self._parameters: Set[str] = set()
         self._modules: Set[str] = set()
@@ -15,12 +17,12 @@ class Module:
         self._train = False
 
     def __setattr__(self, key: str, value: Any) -> None:
+
         # Check whether parameters in list (i.e. sequential)
         is_seq = isinstance(value, (tuple, list))
         if is_seq:
-            value = list(filter(lambda v: isinstance(v, (Parameter, Module)), value))
-            assert all(isinstance(v, Module) for v in value) or all(isinstance(v, Parameter) for v in value),\
-                f"Not all types in sequence are the same for attr. {key}"
+            value = list(filter(lambda v: isinstance(v, Module.AttrTypes), value))
+            assert any(all(isinstance(v, t) for v in value) for t in Module.AttrTypes)
 
         value_t = value[0] if is_seq else value
         if isinstance(value_t, Parameter):
