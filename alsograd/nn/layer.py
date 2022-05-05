@@ -1,4 +1,4 @@
-from typing import Tuple, Callable
+from typing import Tuple, Sequence, Callable
 import numpy as np
 
 from alsograd.core import Parameter
@@ -83,3 +83,17 @@ def MaxPool2D(kernel_size: Tuple[int, int] = (2, 2)):
 def AvgPool2D(kernel_size: Tuple[int, int] = (2, 2)):
     f_pool = lambda x: x.mean(axis=(3, 5))
     return OpPool2D(f_pool, kernel_size)
+
+
+# Other
+class Sequential(Module):
+    def __init__(self, layers: Sequence[Module]):
+        super().__init__()
+
+        self.layers = layers
+
+    def forward(self, x: Parameter) -> Parameter:
+        for l in self.layers:
+            x = l(x)
+
+        return x
