@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional
 import numpy as np
 
 from alsograd.utils import rev_sum, shape_for_keepdims, Axis, Order
@@ -159,22 +159,40 @@ class PadConstant(Operation):
         return g[tuple([slice(p[0], None if p[1] == 0 else -p[1]) for p in self.pad])]
 
 
-# Simple operations
-def Neg():
+class Clamp(Operation):
+    def __init__(self, a_min: Optional[float] = None, a_max: Optional[float] = None):
+        self.a_min, self.a_max = a_min, a_max
+
+    def forward(self, a : np.ndarray) -> np.ndarray:
+        if self.a_min and self.a_max:
+            return np.clip(a, self.a_min, self.a_max)
+
+        return a
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        idx = np.ones(g.shape, dtype=bool)
+        if self.a_min: idx &= (g >= self.a_min)
+        if self.a_max: idx &= (g <= self.a_max)
+
+        return g*idx
+
+
+# Unary operations
+def neg():
     return UnaryOperation(lambda x: -1*x, lambda x: -1)
 
 
-def Log():
+def log():
     return UnaryOperation(np.log, lambda x: 1/x)
 
 
-def Exp():
+def exp():
     return UnaryOperation(np.exp, np.exp)
 
 
-def Sin():
+def sin():
     return UnaryOperation(np.sin, np.cos)
 
 
-def Cos():
+def cos():
     return UnaryOperation(np.cos, lambda x: -1*np.sin(x))

@@ -3,18 +3,8 @@ import numpy as np
 from alsograd.core import Parameter, Operation
 
 
-class ReLU(Operation):
-    def forward(self, a: np.ndarray) -> np.ndarray:
-        self.add_to_cache(a)
-        return np.maximum(a, 0)
-
-    def backward(self, g: np.ndarray) -> np.ndarray:
-        a, = self.cache
-        return g*(a >= 0)
-
-
 def relu(a: Parameter) -> Parameter:
-    return ReLU()(a)
+    return a.clamp(a_min=0, a_max=None)
 
 
 def softmax(a: Parameter) -> Parameter:

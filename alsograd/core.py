@@ -143,7 +143,7 @@ class Parameter:
         return ops.Dot()(self, other)
 
     def __neg__(self) -> Parameter:
-        return ops.Neg()(self)
+        return ops.neg()(self)
 
     def __getitem__(self, key) -> Parameter:
         return ops.Slice(key)(self)
@@ -171,21 +171,24 @@ class Parameter:
     def pad_constant(self, pad, value=0) -> Parameter:
         return ops.PadConstant(pad, value)(self)
 
+    def clamp(self, **kwargs) -> Parameter:
+        return ops.Clamp(**kwargs)(self)
+
     @property
     def T(self) -> Parameter:
         return self.transpose(axis=None)
 
     def exp(self) -> Parameter:
-        return ops.Exp()(self)
+        return ops.exp()(self)
 
     def log(self) -> Parameter:
-        return ops.Log()(self)
+        return ops.log()(self)
 
     def sin(self) -> Parameter:
-        return ops.Sin()(self)
+        return ops.sin()(self)
 
     def cos(self) -> Parameter:
-        return ops.Cos()(self)
+        return ops.cos()(self)
 
     def sqrt(self) -> Parameter:
         return self**0.5
