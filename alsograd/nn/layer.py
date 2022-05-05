@@ -96,7 +96,7 @@ def AvgPool2D(kernel_size: Tuple[int, int] = (2, 2)):
 
 # Other
 class Sequential(Module):
-    def __init__(self, layers: Sequence[Module]):
+    def __init__(self, layers: Sequence[Callable[[Parameter], Parameter]]):
         super().__init__()
 
         self.layers = layers
