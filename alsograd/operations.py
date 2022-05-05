@@ -199,4 +199,4 @@ def cos():
 
 
 def tanh():
-    return UnaryOperation(np.tanh, lambda x: 1 - tanh(x)**2)
+    return UnaryOperation(np.tanh, lambda x: 1 - np.tanh(x)**2)
