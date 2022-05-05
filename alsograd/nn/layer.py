@@ -100,11 +100,12 @@ class RNN(Module):
 
         self.hidden_size = hidden_size
 
-        self.w_xh = Parameter.init(in_size, hidden_size)
-        self.b_xh = Parameter.init(hidden_size)
+        std = 1/np.sqrt(hidden_size)
+        self.w_xh = Parameter.uniform(in_size, hidden_size, lo=-std, hi=std)
+        self.b_xh = Parameter.uniform(hidden_size, lo=-std, hi=std)
 
-        self.w_hh = Parameter.init(hidden_size, hidden_size)
-        self.b_hh = Parameter.init(hidden_size)
+        self.w_hh = Parameter.uniform(hidden_size, hidden_size, lo=-std, hi=std)
+        self.b_hh = Parameter.uniform(hidden_size, lo=-std, hi=std)
 
     def forward(self, x: Parameter) -> Parameter:
         x = x.transpose(order=(1, 0, 2))
@@ -130,18 +131,19 @@ class GRU(Module):
         self.hidden_size = hidden_size
         self.p_size = 3*hidden_size
 
-        self.w_xh = Parameter.init(in_size, self.p_size)
-        self.b_xh = Parameter.init(self.p_size)
+        std = 1/np.sqrt(hidden_size)
+        self.w_xh = Parameter.uniform(in_size, self.p_size, lo=-std, hi=std)
+        self.b_xh = Parameter.uniform(self.p_size, lo=-std, hi=std)
 
-        self.w_hh = Parameter.init(hidden_size, self.p_size)
-        self.b_hh = Parameter.init(self.p_size)
+        self.w_hh = Parameter.uniform(hidden_size, self.p_size, lo=-std, hi=std)
+        self.b_hh = Parameter.uniform(self.p_size, lo=-std, hi=std)
 
     def forward(self, x: Parameter) -> Parameter:
         x = x.transpose(order=(1, 0, 2))
         T, N, _ = x.shape
 
         H = self.hidden_size
-        h = Parameter.zeros(N, H)
+        h = Parameter.zeros(N, H, requires_grad=False)
 
         ys: List[Parameter] = []
         for t in range(T):
@@ -152,7 +154,7 @@ class GRU(Module):
             zt = F.sigmoid(xh[:, H:2*H] + hh[:, H:2*H])
             nt = (xh[:, 2*H:] + rt*hh[:, 2*H:]).tanh()
 
-            ht = (1 - zt)*nt + zt*h
+            h = (1 - zt)*nt + zt*h
             ys.append(h)
 
         return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
