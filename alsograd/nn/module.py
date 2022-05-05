@@ -12,14 +12,13 @@ class Module:
 
     def __setattr__(self, key: str, value: Any) -> None:
         # Check whether parameters in list (i.e. sequential)
-        value_t = value
-        if isinstance(value, (tuple, list)):
+        is_seq = isinstance(value, (tuple, list))
+        if is_seq:
             value = list(filter(lambda v: isinstance(v, (Parameter, Module)), value))
             assert all(type(v) == type(value[0]) for v in value), \
                 f"Not all types in sequence are the same for attr. {key}"
 
-            value_t = value[0]
-
+        value_t = value[0] if is_seq else value
         if isinstance(value_t, Parameter):
             self._parameters.add(key)
         elif isinstance(value_t, Module):
