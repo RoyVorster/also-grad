@@ -43,13 +43,14 @@ class SGD(Optimizer):
 
         p.data -= self.learning_rate*g
 
-
+AdaGrad = partial(RMSProp, alpha=1, beta=1)
 class RMSProp(Optimizer):
-    def __init__(self, model: Module, learning_rate: float = 1e-4, alpha: float = 0.9, delta: float = 1e-5) -> None:
+    def __init__(self, model: Module, learning_rate: float = 1e-4, alpha: float = 0.9,
+                 beta: Optional[float] = None, delta: float = 1e-5) -> None:
         super().__init__(model)
 
         self.learning_rate = learning_rate
-        self.alpha = alpha
+        self.alpha, self.beta = alpha, (1 - alpha) if beta is None else beta
         self.delta = delta
 
         # State
@@ -62,10 +63,7 @@ class RMSProp(Optimizer):
         g = p.grad.data
 
         g_prev = self.g[index]
-        g_new = self.alpha*(g_prev if g_prev is not None else np.zeros_like(g)) + (1 - self.alpha)*g**2
+        g_new = self.alpha*(g_prev if g_prev is not None else np.zeros_like(g)) + self.beta*g**2
 
         p.data -= self.learning_rate*g/(np.sqrt(g_new) + self.delta)
         self.g[index] = g_new
-
-
-AdaGrad = partial(RMSProp, alpha=0)
