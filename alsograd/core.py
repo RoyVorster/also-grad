@@ -206,7 +206,7 @@ class Operation:
     def forward_(self, *parameters: Parameter) -> Parameter:
         self.parents = parameters
 
-        requires_grad = any(p.requires_grad for p in parameters)
+        requires_grad = enable_grad and any(p.requires_grad for p in parameters)
         return Parameter(self.forward(*[p.data for p in parameters]), requires_grad=requires_grad)
 
     def backward_(self, g: np.ndarray) -> Sequence[Parameter]:
