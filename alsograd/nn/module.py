@@ -10,6 +10,8 @@ class Module:
         self._parameters: Set[str] = set()
         self._modules: Set[str] = set()
 
+        self._train = False
+
     def __setattr__(self, key: str, value: Any) -> None:
         # Check whether parameters in list (i.e. sequential)
         is_seq = isinstance(value, (tuple, list))
@@ -26,14 +28,17 @@ class Module:
 
         object.__setattr__(self, key, value)
 
+    def modules(self) -> Generator[Module, None, None]:
+        for k in self._modules:
+            yield from plural(self.__dict__[k])
+
     # Generator to deal with references
     def parameters(self) -> Generator[Parameter, None, None]:
         for k in self._parameters:
             yield from plural(self.__dict__[k])
 
-        for k in self._modules:
-            for m in plural(self.__dict__[k]):
-                yield from m.parameters()
+        for m in self.modules():
+            yield from m.parameters()
 
     def __len__(self) -> int:
         return len(list(self.parameters()))
@@ -41,6 +46,14 @@ class Module:
     def zero_grad(self) -> None:
         for p in self.parameters():
             p.zero_grad()
+
+    def train(self, v=True) -> None:
+        self._train = v
+        for m in self.modules():
+            m.train(v)
+
+    def eval(self) -> None:
+        self.train(v=False)
 
     forward: Callable[..., Parameter]
 
