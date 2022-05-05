@@ -32,9 +32,16 @@ class Conv2D(Module):
     def output_size(self, N: int) -> int:
         return 1 + (N + 2*self.padding - self.kernel_size)//self.stride
 
+    def pad_2d(self, x: Parameter) -> Parameter:
+        pad = [(0, 0)]*(x.ndim - 2) + [(self.padding, self.padding)]*2
+        return x.pad_constant(tuple(pad), value=0)
+
     def forward(self, x: Parameter) -> Parameter:
         N, _, H, W = x.shape
         H_out, W_out = self.output_size(H), self.output_size(W)
+
+        # Pad
+        x_pad = self.pad_2d(x)
 
         # First filter index
         i_base = np.tile(np.repeat(np.arange(self.kernel_size), self.kernel_size), self.in_channels).reshape((-1, 1))
@@ -50,7 +57,7 @@ class Conv2D(Module):
 
         k = np.repeat(np.arange(self.in_channels), self.kernel_size**2).reshape((-1, 1)).astype(int)
 
-        window = x[:, k, i, j].transpose(order=(1, 2, 0)).reshape(self.in_channels*self.kernel_size**2, -1)
+        window = x_pad[:, k, i, j].transpose(order=(1, 2, 0)).reshape(self.in_channels*self.kernel_size**2, -1)
 
         y = self.w.reshape(self.out_channels, -1)@window + self.b.reshape(-1, 1)
         y = y.reshape(self.out_channels, H_out, W_out, N).transpose(order=(3, 0, 1, 2))

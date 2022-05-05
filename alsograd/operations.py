@@ -148,6 +148,17 @@ class Slice(Operation):
         return g_out
 
 
+class PadConstant(Operation):
+    def __init__(self, pad: Tuple[Tuple[int, ...]], value: float = 0):
+        self.pad, self.value = pad, value
+
+    def forward(self, a : np.ndarray) -> np.ndarray:
+        return np.pad(a, self.pad, mode='constant', constant_values=self.value)
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        return g[tuple([slice(p[0], None if p[1] == 0 else -p[1]) for p in self.pad])]
+
+
 # Simple operations
 def Neg():
     return UnaryOperation(lambda x: -1*x, lambda x: -1)

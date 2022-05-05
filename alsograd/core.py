@@ -168,6 +168,9 @@ class Parameter:
     def transpose(self, **kwargs) -> Parameter:
         return ops.Transpose(**kwargs)(self)
 
+    def pad_constant(self, pad, value=0) -> Parameter:
+        return ops.PadConstant(pad, value)(self)
+
     @property
     def T(self) -> Parameter:
         return self.transpose(axis=None)
