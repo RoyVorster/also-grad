@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from copy import copy
-from typing import Iterator, Union, List, Tuple, Set, Any, Optional, Callable, Iterable
+from typing import Iterator, Union, List, Tuple, Set, Any, Optional, Callable, Sequence
 import numpy as np
 
 from alsograd.utils import plural, Axis
@@ -32,25 +32,25 @@ def wrap_parameters(f):
 
 # Parameters with gradients
 class Parameter:
-    def __init__(self, data: Union[Parameter, np.ndarray, Iterable[Any]], requires_grad=True) -> None:
+    def __init__(self, data: Union[Parameter, np.ndarray, Sequence[Any]], requires_grad=True) -> None:
         self.data: np.ndarray = data.data if isinstance(data, Parameter) else np.asarray(data)
         self.requires_grad: bool = data.requires_grad if isinstance(data, Parameter) else requires_grad
 
         self.grad: Optional[Parameter] = None
-        self.creator: Optional[Operation] = None
+        self.builder: Optional[Operation] = None
 
     def __str__(self) -> str:
         return str(self.data)
 
     def detach(self) -> Parameter:
+        self.zero_grad()
         if not self.requires_grad:
-            self.creator = None
             return self
 
         return Parameter(self.data, requires_grad=False)
 
     def zero_grad(self) -> None:
-        self.grad = None
+        self.grad, self.builder = None, None
 
     @property
     def shape(self) -> Tuple[int, ...]:
@@ -92,8 +92,8 @@ class Parameter:
 
         def dfs_(node: Parameter):
             # If can go forward, keep going
-            if node not in seen and node.creator:
-                for new_node in node.creator.parents:
+            if node not in seen and node.builder:
+                for new_node in node.builder.parents:
                     dfs_(new_node)
 
                 nodes.append(node)
@@ -103,12 +103,12 @@ class Parameter:
         # Go backward through the graph
         self.grad = Parameter(np.ones_like(self.data), requires_grad=False)
         for node in reversed(nodes):
-            if not node.creator or not node.grad or \
-                    not any(p.requires_grad for p in node.creator.parents):
+            if not node.builder or not node.grad or \
+                    not any(p.requires_grad for p in node.builder.parents):
                 continue
 
-            grads = node.creator.backward_(node.grad.data)
-            for (parent, grad) in zip(node.creator.parents, grads):
+            grads = node.builder.backward_(node.grad.data)
+            for (parent, grad) in zip(node.builder.parents, grads):
                 if grad and parent.requires_grad:
                     parent.grad = parent.grad + grad if parent.grad else grad
 
@@ -206,7 +206,7 @@ class Operation:
         requires_grad = any(p.requires_grad for p in parameters)
         return Parameter(self.forward(*[p.data for p in parameters]), requires_grad=requires_grad)
 
-    def backward_(self, g: np.ndarray) -> List[Parameter]:
+    def backward_(self, g: np.ndarray) -> Sequence[Parameter]:
         return [Parameter(x, requires_grad=False) for x in plural(self.backward(g))]
 
     def __call__(self, *parameters) -> Parameter:
@@ -214,7 +214,7 @@ class Operation:
 
         output = self.forward_(*parameters)
         if enable_grad and output.requires_grad:
-            output.creator = copy(self)
+            output.builder = copy(self)
 
         return output
 
