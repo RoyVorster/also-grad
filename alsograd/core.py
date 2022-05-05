@@ -60,6 +60,10 @@ class Parameter:
     def ndim(self) -> int:
         return self.data.ndim
 
+    @property
+    def dtype(self) -> type:
+        return self.data.dtype
+
     @classmethod
     def zeros(cls, *shape: int, **kwargs) -> Parameter:
         return cls(np.zeros(shape, dtype=np.float32), **kwargs)

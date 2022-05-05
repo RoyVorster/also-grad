@@ -199,6 +199,21 @@ class LSTM(Module):
         return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
 
 
+class DropOut(Module):
+    def __init__(self, p: float = 0.5):
+        super().__init__()
+
+        assert p > 0 and p < 1
+        self.p, self.compensate = p, 1/(1 - p)
+
+    def forward(self, x: Parameter) -> Parameter:
+        if self._train:
+            mask = np.random.binomial(1, 1 - self.p, size=x.shape)
+            return x*mask*self.compensate
+
+        return x
+
+
 class Sequential(Module):
     def __init__(self, layers: Sequence[Callable[[Parameter], Parameter]]):
         super().__init__()
