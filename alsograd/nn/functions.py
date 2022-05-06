@@ -13,11 +13,12 @@ def sigmoid(a: Parameter) -> Parameter:
     return (1. + (-1.*a).exp())**-1.
 
 
-def softmax(a: Parameter) -> Parameter:
-    new_shape = list(a.shape)[:-1] + [1]
+def softmax(a: Parameter, axis: int = -1) -> Parameter:
+    new_shape = list(a.shape)
+    new_shape[axis] = 1
 
-    err = (a - a.max(axis=-1).reshape(*new_shape)).exp()
-    return err/err.sum(axis=-1).reshape(*new_shape)
+    err = (a - a.max(axis=axis).reshape(*new_shape)).exp()
+    return err/err.sum(axis=axis).reshape(*new_shape)
 
 
 # Losses

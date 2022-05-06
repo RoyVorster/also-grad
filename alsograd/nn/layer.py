@@ -226,10 +226,9 @@ class MultiHeadAttention(Module):
         k, q, v = [l(x).reshape(*int_shape).transpose(order=(0, 2, 1, 3)).reshape(*n_shape) for l in self.kqv]
 
         w_p = q@k.transpose(order=(0, 2, 1))
-        w = F.softmax(w_p/np.sqrt(self.e))
+        w = F.softmax(w_p/np.sqrt(self.e), axis=2)
 
         y = (w@v).reshape(N, self.h, T, K).transpose(order=(0, 2, 1, 3)).reshape(N, T, self.h*K)
-
         return self.w(y)
 
 
