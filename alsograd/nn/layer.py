@@ -8,15 +8,20 @@ import alsograd.nn.functions as F
 
 
 class Linear(Module):
-    def __init__(self, in_size: int, out_size: int):
+    def __init__(self, in_size: int, out_size: int, bias: bool = True):
         super().__init__()
 
+        self.bias = bias
+
         self.w = Parameter.init(in_size, out_size)
-        self.b = Parameter.zeros(out_size)
+        if self.bias:
+            self.b = Parameter.zeros(out_size)
 
     def forward(self, x: Parameter) -> Parameter:
-        return F.addmm(x, self.b, self.w)
+        if self.bias:
+            return F.addmm(x, self.b, self.w)
 
+        return x@self.w
 
 class Conv2D(Module):
     def __init__(self, in_channels: int, out_channels: int, stride: int = 1,
