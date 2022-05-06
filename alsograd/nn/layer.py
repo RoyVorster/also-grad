@@ -204,6 +204,35 @@ class LSTM(Module):
         return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
 
 
+class MultiHeadAttention(Module):
+    def __init__(self, embedding_dim: int, n_heads: int):
+        super().__init__()
+
+        self.e, self.h = embedding_dim, n_heads
+
+        self.kqv = [
+            Linear(self.e, self.e*self.h, bias=False),
+            Linear(self.e, self.e*self.h, bias=False),
+            Linear(self.e, self.e*self.h, bias=False),
+        ]
+
+        self.w = Linear(embedding_dim*n_heads, embedding_dim)
+
+    def forward(self, x: Parameter) -> Parameter:
+        N, T, K = x.shape
+        int_shape, n_shape = (N, T, self.h, K), (N*self.h, T, K)
+
+        # Should maybe implement a .view in the future...
+        k, q, v = [l(x).reshape(*int_shape).transpose(order=(0, 2, 1, 3)).reshape(*n_shape) for l in self.kqv]
+
+        w_p = q@k.transpose(order=(0, 2, 1))
+        w = F.softmax(w_p/np.sqrt(self.e))
+
+        y = (w@v).reshape(N, self.h, T, K).transpose(order=(0, 2, 1, 3)).reshape(N, T, self.h*K)
+
+        return self.w(y)
+
+
 class DropOut(Module):
     def __init__(self, p: float = 0.5):
         super().__init__()
