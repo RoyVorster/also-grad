@@ -35,6 +35,17 @@ def addmm(x: Parameter, b: Parameter, w: Parameter):
     return x@w + b.reshape(*b_shape)
 
 
+def bmm(x: Parameter, y: Parameter):
+    return (x@y).sum(axis=0)
+
+
+def self_attention(x: Parameter):
+    assert x.ndim >= 2
+    y = x.transpose(order=(*list(range(x.ndim))[:-2], -1, -2))
+
+    return bmm(x, y)
+
+
 class Stack(Operation):
     def __init__(self, axis: int = -1):
         self.axis = axis
