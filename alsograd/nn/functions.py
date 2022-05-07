@@ -10,7 +10,7 @@ def relu(a: Parameter) -> Parameter:
 
 
 def sigmoid(a: Parameter) -> Parameter:
-    return (1. + (-1.*a).exp())**-1.
+    return (1. + (-a).exp())**-1.
 
 
 def softmax(a: Parameter, axis: int = -1) -> Parameter:
@@ -34,6 +34,13 @@ def cross_entropy_loss(y_pred: Parameter, y_true: Parameter) -> Parameter:
 def addmm(x: Parameter, b: Parameter, w: Parameter):
     b_shape = [1]*(x.ndim - 1) + [-1]
     return x@w + b.reshape(*b_shape)
+
+
+def reverse(x: Parameter, axis: int = -1):
+    s = [slice(None)]*x.ndim
+    s[axis] = slice(-1, -x.shape[axis] - 1, -1)
+
+    return x[tuple(s)]
 
 
 class Stack(Operation):
