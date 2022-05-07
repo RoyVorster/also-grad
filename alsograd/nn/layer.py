@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from typing import Tuple, Sequence, Callable, List
+from enum import Enum
 import numpy as np
 
 from alsograd.core import Parameter
@@ -99,7 +102,11 @@ def AvgPool2D(kernel_size: Tuple[int, int] = (2, 2)):
     return Pool2D(f_pool, kernel_size)
 
 
-class RNN(Module):
+class RNNModule(Module):
+    pass
+
+
+class RNN(RNNModule):
     def __init__(self, in_size: int, hidden_size: int):
         super().__init__()
 
@@ -129,7 +136,7 @@ class RNN(Module):
         return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
 
 
-class GRU(Module):
+class GRU(RNNModule):
     def __init__(self, in_size: int, hidden_size: int):
         super().__init__()
 
@@ -165,7 +172,7 @@ class GRU(Module):
         return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
 
 
-class LSTM(Module):
+class LSTM(RNNModule):
     def __init__(self, in_size: int, hidden_size: int):
         super().__init__()
 
@@ -202,6 +209,18 @@ class LSTM(Module):
             ys.append(h)
 
         return F.stack(ys, axis=0).transpose(order=(1, 0, 2))
+
+
+class Bidirectional(RNNModule):
+    def __init__(self, fw_layer: RNNModule, bw_layer: RNNModule, seq_axis: int = 1):
+        super().__init__()
+
+        self.fw_layer, self.bw_layer = fw_layer, bw_layer
+        self.seq_axis = seq_axis
+
+    def forward(self, x: Parameter) -> Parameter:
+        x_rev = F.reverse(x, axis=self.seq_axis)
+        return F.stack([self.fw_layer(x), self.bw_layer(x_rev)])
 
 
 class MultiHeadAttention(Module):
