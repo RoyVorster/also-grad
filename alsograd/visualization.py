@@ -3,8 +3,8 @@ from graphviz import Digraph
 from alsograd import Parameter
 
 
-def create_graph(p: Parameter, render=False, f_name="compute_graph", backward_order=True,
-                 show_edge_labels=False) -> Digraph:
+def create_graph(p: Parameter, render=False, f_name="compute_graph",
+                 backward_order=False, show_edge_labels=False) -> Digraph:
     graph = Digraph("g", strict=False)
 
     color = lambda n: 'green' if n.requires_grad else 'red'
@@ -21,7 +21,7 @@ def create_graph(p: Parameter, render=False, f_name="compute_graph", backward_or
 
             s = (node.label, parent.label) if backward_order else (parent.label, node.label)
 
-            edge_label = node.builder.__class__.__name__ if show_edge_labels else ""
+            edge_label = node.builder.label if show_edge_labels else ""
             graph.edge(*s, label=edge_label)
 
     if render:

@@ -225,6 +225,16 @@ class Operation:
     forward: Callable[..., np.ndarray]
     backward: Callable[..., Union[np.ndarray, Tuple[np.ndarray, ...]]]
 
+    @property
+    def label(self) -> str:
+        if '_label' not in self.__dict__.keys():
+            self._label = ""
+        return self._label or self.__class__.__name__
+
+    @label.setter
+    def label(self, v: str) -> None:
+        self._label = v
+
     def reset(self):
         self.parents, self.cache = [], []
 
@@ -253,8 +263,9 @@ class Operation:
 
 class UnaryOperation(Operation):
     def __init__(self, forward: Callable[[np.ndarray], np.ndarray],
-                 backward: Callable[[np.ndarray], np.ndarray]) -> None:
+                 backward: Callable[[np.ndarray], np.ndarray], label: str = "") -> None:
         self.f_forward, self.f_backward = forward, backward
+        self._label = label
 
     def forward(self, a: np.ndarray) -> np.ndarray:
         self.add_to_cache(a)

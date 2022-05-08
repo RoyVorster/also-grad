@@ -179,24 +179,24 @@ class Clamp(Operation):
 
 # Unary operations
 def neg():
-    return UnaryOperation(lambda x: -1*x, lambda _: -1)
+    return UnaryOperation(lambda x: -1*x, lambda _: -1, label="Neg")
 
 
 def log():
-    return UnaryOperation(np.log, lambda x: 1/x)
+    return UnaryOperation(np.log, lambda x: 1/x, label="Log")
 
 
 def exp():
-    return UnaryOperation(np.exp, np.exp)
+    return UnaryOperation(np.exp, np.exp, label="Exp")
 
 
 def sin():
-    return UnaryOperation(np.sin, np.cos)
+    return UnaryOperation(np.sin, np.cos, label="Sin")
 
 
 def cos():
-    return UnaryOperation(np.cos, lambda x: -1*np.sin(x))
+    return UnaryOperation(np.cos, lambda x: -1*np.sin(x), label="Cos")
 
 
 def tanh():
-    return UnaryOperation(np.tanh, lambda x: 1 - np.tanh(x)**2)
+    return UnaryOperation(np.tanh, lambda x: 1 - np.tanh(x)**2, label="Tanh")

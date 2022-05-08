@@ -10,7 +10,7 @@ y.backward()  # Populate gradients
 assert x.grad is not None
 
 x.label, y.label = "x", "y"
-viz.create_graph(y, backward_order=False, render=True)
+viz.create_graph(y, show_edge_labels=True, render=True)
 
 # Plot
 import matplotlib.pyplot as plt
