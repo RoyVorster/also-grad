@@ -32,15 +32,27 @@ def wrap_parameters(f):
 
 # Parameters with gradients
 class Parameter:
-    def __init__(self, data: Union[Parameter, np.ndarray, Sequence[Any]], requires_grad=True) -> None:
+    def __init__(self, data: Union[Parameter, np.ndarray, Sequence[Any]], requires_grad=True,
+                 label: str = "") -> None:
         self.data: np.ndarray = data.data if isinstance(data, Parameter) else np.asarray(data)
         self.requires_grad: bool = data.requires_grad if isinstance(data, Parameter) else requires_grad
 
         self.grad: Optional[Parameter] = None
         self.builder: Optional[Operation] = None
 
+        # Visualization
+        self._label = label
+
     def __str__(self) -> str:
         return str(self.data)
+
+    @property
+    def label(self) -> str:
+        return self._label or str(hex(id(self)))
+
+    @label.setter
+    def label(self, v: str) -> None:
+        self._label = v
 
     def detach(self) -> Parameter:
         self.zero_grad()
