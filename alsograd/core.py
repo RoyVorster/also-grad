@@ -90,23 +90,26 @@ class Parameter:
         data = np.random.uniform(-1, 1, shape)/np.sqrt(np.prod(shape))
         return cls(data.astype(np.float32), **kwargs)
 
+    def topography(self) -> List[Parameter]:
+        nodes: List[Parameter] = []
+        seen: Set[Parameter] = set()
+
+        def dfs(node: Parameter):
+            if node not in seen and node.builder:
+                seen.add(node)
+                for new_node in node.builder.parents:
+                    dfs(new_node)
+
+                nodes.append(node)
+
+        dfs(self)
+        return nodes
+
     def backward(self) -> None:
         if not self.requires_grad or not enable_grad:
             return
 
-        # DFS
-        nodes: List[Parameter] = []
-        seen: Set[Parameter] = set()
-
-        def dfs_(node: Parameter):
-            if node not in seen and node.builder:
-                seen.add(node)
-                for new_node in node.builder.parents:
-                    dfs_(new_node)
-
-                nodes.append(node)
-
-        dfs_(self)
+        nodes = self.topography()
 
         # Go backward through the graph
         self.grad = Parameter(np.ones_like(self.data), requires_grad=False)
