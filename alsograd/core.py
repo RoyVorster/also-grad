@@ -106,7 +106,7 @@ class Parameter:
         return nodes
 
     def backward(self) -> None:
-        if not self.requires_grad or not enable_grad:
+        if not enable_grad:
             return
 
         nodes = self.topography()
