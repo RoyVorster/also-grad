@@ -31,12 +31,12 @@ def cross_entropy_loss(y_pred: Parameter, y_true: Parameter) -> Parameter:
 
 
 # Functions
-def addmm(x: Parameter, b: Parameter, w: Parameter):
+def addmm(x: Parameter, b: Parameter, w: Parameter) -> Parameter:
     b_shape = [1]*(x.ndim - 1) + [-1]
     return x@w + b.reshape(*b_shape)
 
 
-def reverse(x: Parameter, axis: int = -1):
+def reverse(x: Parameter, axis: int = -1) -> Parameter:
     s = [slice(None)]*x.ndim
     s[axis] = slice(-1, -x.shape[axis] - 1, -1)
 
