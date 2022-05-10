@@ -251,6 +251,17 @@ class MultiHeadAttention(Module):
         return self.w(y)
 
 
+class Embedding(Module):
+    def __init__(self, n_embeddings: int, embedding_dim: int):
+        super().__init__()
+
+        self.w = Parameter.init(n_embeddings, embedding_dim)
+
+    # Takes indices
+    def forward(self, x: Parameter) -> Parameter:
+        return F.stack([self.w[x[i, :], :] for i in range(x.shape[0])], axis=0)
+
+
 class DropOut(Module):
     def __init__(self, p: float = 0.5):
         super().__init__()
