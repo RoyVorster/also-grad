@@ -259,7 +259,8 @@ class Embedding(Module):
 
     # Takes indices
     def forward(self, x: Parameter) -> Parameter:
-        return F.stack([self.w[x[i, :], :] for i in range(x.shape[0])], axis=0)
+        N, _ = x.shape
+        return F.stack([self.w[x[i, :], :] for i in range(N)], axis=0)
 
 
 class DropOut(Module):
