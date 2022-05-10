@@ -263,6 +263,24 @@ class Embedding(Module):
         return F.stack([self.w[x[i, :], :] for i in range(N)], axis=0)
 
 
+class Transformer(Module):
+    def __init__(self, embedding_dim: int, n_heads: int, linear_dim: int,
+                 dropout_rate: float = 0.25):
+        self.att = MultiHeadAttention(embedding_dim, n_heads)
+        self.ff = Sequential([
+            Linear(embedding_dim, linear_dim),
+            F.relu,
+            Linear(linear_dim, embedding_dim),
+        ])
+        self.lnorm1, self.lnorm2 = LayerNorm(-1), LayerNorm(-1)
+
+        self.p = dropout_rate
+
+    def forward(self, x: Parameter) -> Parameter:
+        x = self.lnorm1(x + DropOut(self.p)(self.att(x)))
+        return self.lnorm2(x + DropOut(self.p)(self.ff(x)))
+
+
 class DropOut(Module):
     def __init__(self, p: float = 0.5):
         super().__init__()
@@ -276,6 +294,18 @@ class DropOut(Module):
             return x*mask*self.compensate
 
         return x
+
+
+class LayerNorm(Module):
+    def __init__(self, axis: int, eps: float = 1e-5):
+        self.axis = axis
+        self.eps = eps
+
+    def forward(self, x: Parameter) -> Parameter:
+        d = x - x.mean(axis=self.axis, keepdim=True)
+
+        sigma = (d**2).mean(axis=self.axis, keepdim=True)
+        return d/(sigma + self.eps).sqrt()
 
 
 class Sequential(Module):
