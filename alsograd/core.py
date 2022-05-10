@@ -261,25 +261,5 @@ class Operation:
         return output
 
 
-class UnaryOperation(Operation):
-    def __init__(self, forward: Callable[[np.ndarray], np.ndarray],
-                 backward: Callable[[np.ndarray], np.ndarray], label: str = "") -> None:
-        self.f_forward, self.f_backward = forward, backward
-        self._label = label
-
-    def forward(self, a: np.ndarray) -> np.ndarray:
-        self.add_to_cache(a)
-        return self.f_forward(a)
-
-    def backward(self, g: np.ndarray) -> np.ndarray:
-        a, = self.cache
-        return g*self.f_backward(a)
-
-
-class ReduceOperation(Operation):
-    def __init__(self, axis: Axis):
-        self.axis = axis
-
-
 # Circular imports
 import alsograd.operations as ops

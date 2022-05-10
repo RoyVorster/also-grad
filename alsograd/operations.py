@@ -1,10 +1,11 @@
-from typing import Tuple, Union, Optional
+from typing import Tuple, Union, Optional, Callable
 import numpy as np
 
 from alsograd.utils import rev_sum, shape_for_keepdims, Axis, Order
-from alsograd.core import Parameter, Operation, UnaryOperation, ReduceOperation
+from alsograd.core import Parameter, Operation
 
 
+# Parameter operations
 class Pow(Operation):
     def forward(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
         y = a**b
@@ -57,6 +58,11 @@ class Div(Operation):
 
 
 # Reduce operations
+class ReduceOperation(Operation):
+    def __init__(self, axis: Axis):
+        self.axis = axis
+
+
 class Sum(ReduceOperation):
     def __init__(self, axis: Axis = None):
         super().__init__(axis)
@@ -178,6 +184,21 @@ class Clamp(Operation):
 
 
 # Unary operations
+class UnaryOperation(Operation):
+    def __init__(self, forward: Callable[[np.ndarray], np.ndarray],
+                 backward: Callable[[np.ndarray], np.ndarray], label: str = "") -> None:
+        self.f_forward, self.f_backward = forward, backward
+        self._label = label
+
+    def forward(self, a: np.ndarray) -> np.ndarray:
+        self.add_to_cache(a)
+        return self.f_forward(a)
+
+    def backward(self, g: np.ndarray) -> np.ndarray:
+        a, = self.cache
+        return g*self.f_backward(a)
+
+
 def neg():
     return UnaryOperation(lambda x: -1*x, lambda _: -1, label="Neg")
 
